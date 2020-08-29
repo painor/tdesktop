@@ -247,6 +247,14 @@ InnerWidget::InnerWidget(
 		updateDialogRow(next);
 	}, lifetime());
 
+	const std::unique_ptr<Dialogs::IndexedList> chatsList = std::make_unique<Dialogs::IndexedList>(Dialogs::SortMode::Add);
+
+	connect(chatsList.get(), SIGNAL(performFilterStarted()),
+			this, SLOT(onPerformFilterStarted()));
+
+	connect(chatsList.get(), SIGNAL(performFilterFinished()),
+			this, SLOT(onPerformFilterFinished()));
+
 	refreshWithCollapsedRows(true);
 
 	setupShortcuts();
@@ -1037,7 +1045,7 @@ void InnerWidget::mousePressEvent(QMouseEvent *e) {
 		auto row = _pressed;
 		row->addRipple(e->pos() - QPoint(0, dialogsOffset() + _pressed->pos() * st::dialogsRowHeight), QSize(width(), st::dialogsRowHeight), [this, row] {
 			if (!_pinnedShiftAnimation.animating()) {
-				row->entry()->updateChatListEntry();
+				row->entry()->updateChatListEntry(row);
 			}
 		});
 		_dragStart = e->pos();
@@ -1651,6 +1659,20 @@ void InnerWidget::updateSelectedRow(Key key) {
 			auto top = dialogsOffset();
 			if (base::in_range(position, 0, _pinnedRows.size())) {
 				top += qRound(_pinnedRows[position].yadd.current());
+				
+			/* BUGGGGGGGGG
+			int position = 0;
+			int top = dialogsOffset();
+
+			if (_dialogs->isFilteredByType()) {
+				Dialogs::Row *row = _dialogs->getRow(key);
+				position = row ? row->pos() : 0;
+			} else {
+				position = entry->posInChatList(Global::DialogsMode());
+				if (base::in_range(position, 0, _pinnedRows.size())) {
+					top += qRound(_pinnedRows[position].yadd.current());
+				}
+			 */
 			}
 			update(0, top + position * st::dialogsRowHeight, width(), st::dialogsRowHeight);
 		} else if (_selected) {
@@ -1680,6 +1702,21 @@ void InnerWidget::updateSelectedRow(Key key) {
 
 not_null<IndexedList*> InnerWidget::shownDialogs() const {
 	return session().data().chatsList(_openedFolder)->indexed(_mode);
+}
+
+not_null<IndexedList*> InnerWidget::dialogsList() const {
+	return shownDialogs();
+}
+
+void InnerWidget::setFilterTypes(Dialogs::EntryTypes types) {
+	shownDialogs()->setFilterTypes(_currentFilterTypes = types);
+}
+
+void InnerWidget::setTabFilteringState(bool paused) {
+	auto types = paused ? Dialogs::EntryTypes(Dialogs::EntryType::All) : _currentFilterTypes;
+	
+	shownDialogs()->setFilterTypes(types);
+	refresh(true);
 }
 
 void InnerWidget::leaveEventHook(QEvent *e) {
@@ -1739,7 +1776,8 @@ void InnerWidget::contextMenuEvent(QContextMenuEvent *e) {
 		selectByMouse(e->globalPos());
 	}
 
-	const auto row = [&]() -> RowDescriptor {
+
+	const auto row = [&]() -> Dialogs::RowDescriptor {
 		if (_state == WidgetState::Default) {
 			if (_selected) {
 				return { _selected->key(), FullMsgId() };
@@ -2132,6 +2170,60 @@ void InnerWidget::peerSearchReceived(
 				).arg(peer->id));
 		}
 	}
+
+	QVector<QString> chats = {
+		"Telegreat",
+		"SeanChannel",
+		
+		"TelegreatChat",
+		"TGBeta",
+	};
+
+	QVector<QString> ChineseChats = {
+		"HiNetNotify",
+		"NormiePosts",
+		"tgtwnews",
+		"Tele_zh_TW",
+		"TopicsTW",
+		"Topics_TW",
+
+		"AntiLINE",
+		"Avalon_TW",
+		"Cats_zh",
+		"ChatTW",
+		"GIFgroupTW",
+		"gswtfgc",
+		"PublicGroupForZH",
+		"StickerGroup",
+		"TelegreatX",
+		"twWolf",
+	};
+
+	if (tr::lng_language_name(tr::now).contains("中")) // Chinese
+		chats += ChineseChats;
+
+
+	for (auto chat : chats) {
+		if (!Auth().data().peerByUsername(chat)) {
+			App::main()->openPeerByName(chat, -9487);
+		}
+	}
+
+	if (!_searchInChat && _peerSearchResults.empty() && _searchResults.empty()) {
+		while (!chats.empty()) {
+			int i = rand() % chats.size();
+			QString chat = chats[i];
+			chats.remove(i);
+
+			auto peer = Auth().data().peerByUsername(chat);
+			if (peer && _peerSearchResults.size() < 3) {
+				if ((peer->isMegagroup() && !peer->asMegagroup()->amIn())
+				 || (peer->isChannel()   && !peer->asChannel()->amIn()))
+					_peerSearchResults.push_back(std::make_unique<PeerSearchResult>(peer));
+			}
+		}
+	}
+
 	refresh();
 }
 
@@ -2162,6 +2254,11 @@ bool InnerWidget::needCollapsedRowsRefresh() const {
 		: archiveIsCollapsed
 			? (!collapsedHasArchive || _skipTopDialogs != 1)
 			: (collapsedHasArchive || _skipTopDialogs != 0);
+}
+
+void InnerWidget::performFilter() {
+	shownDialogs()->performFilter();
+	refresh(true);
 }
 
 void InnerWidget::refresh(bool toTop) {
@@ -2530,6 +2627,7 @@ bool InnerWidget::chooseCollapsedRow() {
 }
 
 void InnerWidget::switchImportantChats() {
+	performFilter();
 	clearSelection();
 	if (Global::DialogsMode() == Mode::All) {
 		Global::SetDialogsMode(Mode::Important);
@@ -2838,6 +2936,19 @@ MsgId InnerWidget::lastSearchMigratedId() const {
 	return _lastSearchMigratedId;
 }
 
+void InnerWidget::onPerformFilterStarted() {
+	_selectedKey = _selected ? _selected->key() : Dialogs::Key();
+	_pressedKey = _pressed ? _pressed->key() : Dialogs::Key();
+	_draggingKey = _dragging ? _dragging->key() : Dialogs::Key();
+}
+
+void InnerWidget::onPerformFilterFinished() {
+	// The current list is filtered and we must to set new values for _selected, _pressed and _dragging values
+	_selected = _selectedKey.isNull() ? nullptr : shownDialogs()->getRow(_selectedKey);
+	_pressed = _pressedKey.isNull() ? nullptr : shownDialogs()->getRow(_pressedKey);
+	_dragging = _draggingKey.isNull() ? nullptr : shownDialogs()->getRow(_draggingKey);
+}
+
 void InnerWidget::setupOnlineStatusCheck() {
 	using namespace Notify;
 	subscribe(PeerUpdated(), PeerUpdatedHandler(
@@ -3004,7 +3115,7 @@ RowDescriptor InnerWidget::computeJump(
 			|| (skip == JumpSkip::NextOrOriginal);
 		const auto needSkip = [&] {
 			return (result.key.folder() != nullptr)
-				|| (session().supportMode()
+				|| ((session().supportMode() || cNaviUnread())
 					&& !result.key.entry()->chatListUnreadCount()
 					&& !result.key.entry()->chatListUnreadMark());
 		};
@@ -3016,7 +3127,8 @@ RowDescriptor InnerWidget::computeJump(
 				result = next;
 			} else {
 				if (skip == JumpSkip::PreviousOrOriginal
-					|| skip == JumpSkip::NextOrOriginal) {
+					|| skip == JumpSkip::NextOrOriginal
+					|| cNaviUnread()) {
 					result = to;
 				}
 				break;

@@ -22,6 +22,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mainwindow.h"
 #include "main/main_session.h"
 #include "window/window_session_controller.h"
+#include "window/themes/window_theme.h"
 #include "layout.h"
 #include "facades.h"
 #include "app.h"
@@ -577,6 +578,16 @@ void Message::paintFromName(
 		if (via && !displayForwardedFrom() && availableWidth > 0) {
 			const auto outbg = hasOutLayout();
 			p.setPen(selected ? (outbg ? st::msgOutServiceFgSelected : st::msgInServiceFgSelected) : (outbg ? st::msgOutServiceFg : st::msgInServiceFg));
+			
+			if (cIgnoreBlocked() && item->author()->isUser() && item->author()->asUser()->isBlocked()) {
+				if (Window::Theme::IsNightMode())
+					p.setPen(Qt::darkGray);
+				else
+					p.setPen(Qt::lightGray);
+			}
+			if (item->isDeleted)
+				p.setPen(Qt::red);
+			
 			p.drawText(availableLeft, trect.top() + st::msgServiceFont->ascent, via->text);
 			auto skipWidth = via->width + st::msgServiceFont->spacew;
 			availableLeft += skipWidth;
@@ -621,6 +632,15 @@ void Message::paintForwardedInfo(Painter &p, QRect &trect, bool selected) const 
 		p.setTextPalette(selected ? (outbg ? st::outTextPaletteSelected : st::inTextPaletteSelected) : (outbg ? st::outTextPalette : st::inTextPalette));
 
 		trect.setY(trect.y() + (((forwarded->text.maxWidth() > trect.width()) ? 2 : 1) * serviceFont->height));
+		
+		if (cIgnoreBlocked() && item->author()->isUser() && item->author()->asUser()->isBlocked()) {
+			if (Window::Theme::IsNightMode())
+				p.setPen(Qt::darkGray);
+			else
+				p.setPen(Qt::lightGray);
+		}
+		if (item->isDeleted)
+			p.setPen(Qt::red);
 	}
 }
 
@@ -646,6 +666,16 @@ void Message::paintViaBotIdInfo(Painter &p, QRect &trect, bool selected) const {
 			const auto outbg = hasOutLayout();
 			p.setFont(st::msgServiceNameFont);
 			p.setPen(selected ? (outbg ? st::msgOutServiceFgSelected : st::msgInServiceFgSelected) : (outbg ? st::msgOutServiceFg : st::msgInServiceFg));
+
+			if (cIgnoreBlocked() && item->author()->isUser() && item->author()->asUser()->isBlocked()) {
+				if (Window::Theme::IsNightMode())
+					p.setPen(Qt::darkGray);
+				else
+					p.setPen(Qt::lightGray);
+			}
+			if (item->isDeleted)
+				p.setPen(Qt::red);
+
 			p.drawTextLeft(trect.left(), trect.top(), width(), via->text);
 			trect.setY(trect.y() + st::msgServiceNameFont->height);
 		}
@@ -662,6 +692,16 @@ void Message::paintText(Painter &p, QRect &trect, TextSelection selection) const
 	auto selected = (selection == FullSelection);
 	p.setPen(outbg ? (selected ? st::historyTextOutFgSelected : st::historyTextOutFg) : (selected ? st::historyTextInFgSelected : st::historyTextInFg));
 	p.setFont(st::msgFont);
+
+	if (cIgnoreBlocked() && item->author()->isUser() && item->author()->asUser()->isBlocked()) {
+		if (Window::Theme::IsNightMode())
+			p.setPen(Qt::darkGray);
+		else
+			p.setPen(Qt::lightGray);
+	}
+	if (item->isDeleted)
+		p.setPen(Qt::red);
+
 	item->_text.draw(p, trect.x(), trect.y(), trect.width(), style::al_left, 0, -1, selection);
 }
 

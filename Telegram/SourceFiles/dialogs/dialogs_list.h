@@ -70,6 +70,8 @@ public:
 	const_iterator find(int y, int h) const { return cfind(y, h); }
 	iterator find(int y, int h) { return cfind(y, h); }
 
+	inline const SortMode& getSortMode() const { return _sortMode; }
+
 private:
 	void adjustByName(not_null<Row*> row);
 	void rotate(

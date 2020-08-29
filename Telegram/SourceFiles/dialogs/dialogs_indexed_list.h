@@ -14,7 +14,9 @@ class History;
 
 namespace Dialogs {
 
-class IndexedList {
+class IndexedList : public QObject {
+	Q_OBJECT
+
 public:
 	IndexedList(SortMode sortMode);
 
@@ -41,13 +43,19 @@ public:
 	void clear();
 
 	const List &all() const {
+		return current();
+	}
+	const List &unfilteredAll() const {
 		return _list;
 	}
+
 	const List *filtered(QChar ch) const {
 		const auto i = _index.find(ch);
 		return (i != _index.end()) ? &i->second : nullptr;
 	}
 	std::vector<not_null<Row*>> filtered(const QStringList &words) const;
+
+	bool isFilteredByType() const;
 
 	~IndexedList();
 
@@ -72,6 +80,16 @@ public:
 	const_iterator cfind(int y, int h) const { return all().cfind(y, h); }
 	const_iterator find(int y, int h) const { return all().cfind(y, h); }
 	iterator find(int y, int h) { return all().find(y, h); }
+	void setFilterTypes(EntryTypes types);
+	const EntryTypes& getFilterTypes() const { return _filterTypes; }
+
+	void performFilter();
+
+	void countUnreadMessages(UnreadState counts[4]) const;
+
+signals:
+	void performFilterStarted();
+	void performFilterFinished();
 
 private:
 	void adjustByName(
@@ -82,9 +100,15 @@ private:
 		not_null<History*> history,
 		const base::flat_set<QChar> &oldChars);
 
+	List& current();
+	const List& current() const;
+
+
 	SortMode _sortMode = SortMode();
 	List _list, _empty;
+	std::unique_ptr<List> _pFiltered;
 	base::flat_map<QChar, List> _index;
+	Dialogs::EntryTypes _filterTypes = Dialogs::EntryType::All;
 
 };
 

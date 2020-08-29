@@ -47,7 +47,7 @@ const auto MediaCommands = base::flat_set<Command>{
 };
 
 const auto SupportCommands = base::flat_set<Command>{
-	Command::SupportReloadTemplates,
+//	Command::SupportReloadTemplates, // Telegreat Enable By Default
 	Command::SupportToggleMuted,
 	Command::SupportScrollToCurrent,
 	Command::SupportHistoryBack,

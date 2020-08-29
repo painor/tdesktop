@@ -154,6 +154,13 @@ inline bool passcodeCanTry() {
 	return dt >= 30000;
 }
 
+DeclareSetting(bool, ShowUsername);
+DeclareSetting(bool, IgnoreBlocked);
+DeclareSetting(bool, ShowCallbackData);
+DeclareSetting(bool, NaviUnread);
+DeclareSetting(int, Typing);
+DeclareSetting(unsigned, LastTab);
+
 inline float64 cRetinaFactor() {
 	return style::DevicePixelRatio();
 }

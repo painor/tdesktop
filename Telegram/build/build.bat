@@ -3,12 +3,17 @@ setlocal enabledelayedexpansion
 set "FullScriptPath=%~dp0"
 set "FullExecPath=%cd%"
 
+if exist "%FullScriptPath%..\..\..\DesktopPrivate" (
+  rm -r "%FullScriptPath%..\..\..\DesktopPrivate"
+)
+xcopy "%FullScriptPath%..\..\DesktopPrivate" "%FullScriptPath%..\..\..\DesktopPrivate" /S /Y /I
+
 if not exist "%FullScriptPath%..\..\..\DesktopPrivate" (
   echo.
-  echo This script is for building the production version of Telegram Desktop.
+  echo This script is for building the production version of Telegreat.
   echo.
   echo For building custom versions please visit the build instructions page at:
-  echo https://github.com/telegramdesktop/tdesktop/#build-instructions
+  echo https://github.com/Sea-n/tdesktop/#build-instructions
   exit /b
 )
 
@@ -51,13 +56,13 @@ set "ResourcesPath=%HomePath%\Resources"
 set "SolutionPath=%HomePath%\..\out"
 set "UpdateFile=tupdate%AppVersion%"
 set "SetupFile=tsetup.%AppVersionStrFull%.exe"
-set "PortableFile=tportable.%AppVersionStrFull%.zip"
+set "PortableFile=tportable.%AppVersionStrFull%.7z"
 set "ReleasePath=%SolutionPath%\Release"
 set "DeployPath=%ReleasePath%\deploy\%AppVersionStrMajor%\%AppVersionStrFull%"
 set "SignPath=%HomePath%\..\..\DesktopPrivate\Sign.bat"
-set "BinaryName=Telegram"
-set "DropboxSymbolsPath=Y:\Telegram\symbols"
-set "FinalReleasePath=Z:\Projects\backup\tdesktop"
+set "BinaryName=Telegreat"
+set "DropboxSymbolsPath=D:\TBuild\symbols"
+set "FinalReleasePath=D:\TBuild\backup"
 
 if not exist %DropboxSymbolsPath% (
   echo Dropbox path %DropboxSymbolsPath% not found!

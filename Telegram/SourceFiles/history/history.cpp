@@ -2796,6 +2796,18 @@ bool History::isMegagroup() const {
 	return peer->isMegagroup();
 }
 
+Dialogs::EntryTypes History::getEntryType() const {
+	Dialogs::EntryType ret = peer->isChat() || peer->isMegagroup()
+	?  Dialogs::EntryType::Group
+	:  isChannel()
+	?  Dialogs::EntryType::Channel
+	:  peer->asUser()->isBot()
+	?  Dialogs::EntryType::Bot
+	:  Dialogs::EntryType::Private;
+	
+	return ret;
+}
+
 not_null<History*> History::migrateToOrMe() const {
 	if (const auto to = peer->migrateTo()) {
 		return owner().history(to);

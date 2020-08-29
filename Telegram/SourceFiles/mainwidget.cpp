@@ -54,6 +54,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/media/history_view_media.h"
 #include "history/view/history_view_service_message.h"
 #include "history/view/history_view_element.h"
+#include "history/history_service.h"
 #include "lang/lang_keys.h"
 #include "lang/lang_cloud_manager.h"
 #include "boxes/add_contact_box.h"
@@ -986,6 +987,11 @@ void MainWidget::cacheBackground() {
 	}
 	_cachedFor = _willCacheFor;
 }
+
+void MainWidget::unreadCountChanged() {
+    _dialogs->unreadCountChanged();
+}
+
 
 crl::time MainWidget::highlightStartTime(not_null<const HistoryItem*> item) const {
 	return _history->highlightStartTime(item);
@@ -3255,6 +3261,8 @@ void MainWidget::openPeerByName(
 	Core::App().hideMediaView();
 
 	if (const auto peer = session().data().peerByUsername(username)) {
+		if (msgId == -9487)
+			return;
 		if (msgId == ShowAtGameShareMsgId) {
 			if (peer->isUser() && peer->asUser()->isBot() && !startToken.isEmpty()) {
 				peer->asUser()->botInfo->shareGameShortName = startToken;
@@ -3309,7 +3317,10 @@ void MainWidget::openPeerByName(
 			});
 		}
 	} else {
-		MTP::send(MTPcontacts_ResolveUsername(MTP_string(username)), rpcDone(&MainWidget::usernameResolveDone, qMakePair(msgId, startToken)), rpcFail(&MainWidget::usernameResolveFail, username));
+		auto failName = username;
+		if (msgId == -9487)
+			failName = "IGNORE";
+		MTP::send(MTPcontacts_ResolveUsername(MTP_string(username)), rpcDone(&MainWidget::usernameResolveDone, qMakePair(msgId, startToken)), rpcFail(&MainWidget::usernameResolveFail, failName));
 	}
 }
 
@@ -3332,6 +3343,8 @@ void MainWidget::usernameResolveDone(QPair<MsgId, QString> msgIdAndStartToken, c
 	PeerData *peer = session().data().peer(peerId);
 	MsgId msgId = msgIdAndStartToken.first;
 	QString startToken = msgIdAndStartToken.second;
+	if (msgId == -9487)
+		return;
 	if (msgId == ShowAtProfileMsgId && !peer->isChannel()) {
 		if (peer->isUser() && peer->asUser()->isBot() && !peer->asUser()->botInfo->cantJoinGroups && !startToken.isEmpty()) {
 			peer->asUser()->botInfo->startGroupToken = startToken;
@@ -3369,6 +3382,9 @@ void MainWidget::usernameResolveDone(QPair<MsgId, QString> msgIdAndStartToken, c
 }
 
 bool MainWidget::usernameResolveFail(QString name, const RPCError &error) {
+	if (name == "IGNORE")
+		return false;
+
 	if (MTP::isDefaultHandledError(error)) return false;
 
 	if (error.code() == 400) {
@@ -4130,6 +4146,19 @@ void MainWidget::feedUpdate(const MTPUpdate &update) {
 		const auto history = session().data().historyLoaded(userId);
 		const auto user = session().data().userLoaded(d.vuser_id().v);
 		if (history && user) {
+			if ((cTyping() & 0x10) && user->isContact()) {
+				Ui::Toast::Config toast;
+				toast.text = tr::lng_user_typing(tr::now, lt_user, user->firstName);
+				toast.durationMs = 2000;
+				Ui::Toast::Show(toast);
+			} else if (cTyping() & 0x100) {
+				Ui::Toast::Config toast;
+				toast.text = tr::lng_user_typing(tr::now, lt_user, user->firstName);
+				toast.durationMs = 1000;
+				if (Auth().data().notifyIsMuted(user))
+					toast.durationMs = 300;
+				Ui::Toast::Show(toast);
+			}
 			const auto when = requestingDifference() ? 0 : base::unixtime::now();
 			session().data().registerSendAction(history, user, d.vaction(), when);
 		}
@@ -4137,17 +4166,45 @@ void MainWidget::feedUpdate(const MTPUpdate &update) {
 
 	case mtpc_updateChatUserTyping: {
 		auto &d = update.c_updateChatUserTyping();
+		const auto user = (d.vuser_id().v == Auth().userId())
+		? nullptr
+		: session().data().userLoaded(d.vuser_id().v);
+		if (!user)
+			break;
+
 		const auto history = [&]() -> History* {
-			if (const auto chat = session().data().chatLoaded(d.vchat_id().v)) {
+			int x = getDurationTime(user);
+			if (auto chat = session().data().chatLoaded(d.vchat_id().v)) {
+				if ((cTyping() & 0x20) && user->isContact()) {
+					Ui::Toast::Config toast;
+					toast.text = tr::lng_telegreat_user_typing(tr::now, lt_user, user->firstName, lt_chat, chat->topBarNameText().toString());
+					toast.durationMs = 40 * x;
+					Ui::Toast::Show(toast);
+				} else if (cTyping() & 0x200) {
+					Ui::Toast::Config toast;
+					toast.text = tr::lng_telegreat_user_typing(tr::now, lt_user, user->firstName, lt_chat, chat->topBarNameText().toString());
+					toast.durationMs = 30 * x;
+					Ui::Toast::Show(toast);
+				}
+
 				return session().data().historyLoaded(chat->id);
-			} else if (const auto channel = session().data().channelLoaded(d.vchat_id().v)) {
+			} else if (auto channel = session().data().channelLoaded(d.vchat_id().v)) {
+				if ((cTyping() & 0x20) && user->isContact()) {
+					Ui::Toast::Config toast;
+					toast.text = tr::lng_telegreat_user_typing(tr::now, lt_user, user->firstName, lt_chat, channel->shortName());
+					toast.durationMs = 40 * x;
+					Ui::Toast::Show(toast);
+				} else if (cTyping() & 0x400) {
+					Ui::Toast::Config toast;
+					toast.text = tr::lng_telegreat_user_typing(tr::now, lt_user, user->firstName, lt_chat, channel->shortName());
+					toast.durationMs = 20 * x;
+					Ui::Toast::Show(toast);
+				}
+
 				return session().data().historyLoaded(channel->id);
 			}
 			return nullptr;
 		}();
-		const auto user = (d.vuser_id().v == session().userId())
-			? nullptr
-			: session().data().userLoaded(d.vuser_id().v);
 		if (history && user) {
 			const auto when = requestingDifference() ? 0 : base::unixtime::now();
 			session().data().registerSendAction(history, user, d.vaction(), when);
@@ -4187,7 +4244,23 @@ void MainWidget::feedUpdate(const MTPUpdate &update) {
 			case mtpc_userStatusLastWeek: user->onlineTill = -3; break;
 			case mtpc_userStatusLastMonth: user->onlineTill = -4; break;
 			case mtpc_userStatusOffline: user->onlineTill = d.vstatus().c_userStatusOffline().vwas_online().v; break;
-			case mtpc_userStatusOnline: user->onlineTill = d.vstatus().c_userStatusOnline().vexpires().v; break;
+			case mtpc_userStatusOnline: {
+				user->onlineTill = d.vstatus().c_userStatusOnline().vexpires().v;
+
+				int x = getDurationTime(user);
+
+				if ((cTyping() & 0x1) && user->isContact()) {
+					Ui::Toast::Config toast;
+					toast.text = tr::lng_telegreat_user_online(tr::now, lt_user, user->firstName);
+					toast.durationMs = 50 * x;
+					Ui::Toast::Show(toast);
+				} else if (cTyping() & 0x2) {
+					Ui::Toast::Config toast;
+					toast.text = tr::lng_telegreat_user_online(tr::now, lt_user, user->firstName);
+					toast.durationMs = 25 * x;
+					Ui::Toast::Show(toast);
+				}
+			} break;
 			}
 			Notify::peerUpdatedDelayed(
 				user,
@@ -4624,6 +4697,36 @@ void MainWidget::feedUpdate(const MTPUpdate &update) {
 	} break;
 
 	}
+}
+
+int MainWidget::getDurationTime(const PeerData *peer) {
+	PeerId peerId = peer->id;
+	History *history = session().data().history(peerId);
+	HistoryItem *msg = history->chatListMessage();
+	if (msg == nullptr)
+		return 30;
+	
+	QDateTime msgDate = base::unixtime::parse(msg->date());
+	QDateTime now = QDateTime::currentDateTime();
+	int after = msgDate.daysTo(now);
+	int time = 1;
+
+	if (after > 30)
+		time = 40;
+	else if (after > 7)
+		time = 50;
+	else if (after > 3)
+		time = 60;
+	else if (after > 2)
+		time = 70;
+	else if (after > 1)
+		time = 80;
+	else if (after > 0)
+		time = 90;
+	else
+		time = 100;
+
+	return time;  // Unit: percentage
 }
 
 namespace App {

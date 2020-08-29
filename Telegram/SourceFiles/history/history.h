@@ -301,6 +301,7 @@ public:
 	HistoryItemsList validateForwardDraft();
 	void setForwardDraft(MessageIdsList &&items);
 
+	Dialogs::EntryTypes getEntryType() const override;
 	History *migrateSibling() const;
 	bool useProxyPromotion() const;
 	int fixedOnTopIndex() const override;

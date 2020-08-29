@@ -104,6 +104,31 @@ namespace App {
 		return result;
 	}
 
+	void updateTab(int oriType, int newType) {
+		auto &peers = *Auth().data().allPeers();
+		for (const auto &[peerId, peer] : peers) {
+			int bit = 0;
+			if (peer->isUser()) {
+				if (peer->asUser()->botInfo)
+					bit = 0x8;
+				else
+					bit = 0x1;
+			} else if (peer->isMegagroup() || peer->isChat())
+				bit = 0x2;
+			else if (peer->isChannel())
+				bit = 0x4;
+			
+			if ((oriType ^ newType) & bit) {
+				PeerId peerId = peer->id;
+				auto history = Auth().data().history(peerId);
+				if (newType & bit)
+					history->updateChatListExistence();
+				else
+					App::main()->removeDialog(history);
+			}
+		}
+	}
+
 	void prepareCorners(RoundCorners index, int32 radius, const QBrush &brush, const style::color *shadow = nullptr, QImage *cors = nullptr) {
 		Expects(::corners.size() > index);
 

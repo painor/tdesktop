@@ -117,6 +117,8 @@ void UserData::setName(const QString &newFirstName, const QString &newLastName, 
 			lastName = newLastName;
 		}
 		newFullName = lastName.isEmpty() ? firstName : tr::lng_full_name(tr::now, lt_first_name, firstName, lt_last_name, lastName);
+		if (cShowUsername() && !newUsername.isEmpty())
+			newFullName.append(" [@" + newUsername + "]");
 	}
 	updateNameDelayed(newFullName, newPhoneName, newUsername);
 }

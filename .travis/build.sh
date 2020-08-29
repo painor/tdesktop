@@ -49,9 +49,9 @@ GYP_DEFINES=""
 run() {
   # Move files to subdir
   cd ..
-  mv tdesktop tdesktop2
-  mkdir tdesktop
-  mv tdesktop2 "$UPSTREAM"
+  mv Telegreat Telegreat2
+  mkdir Telegreat
+  mv Telegreat2 "$UPSTREAM"
 
   mkdir "$BUILD"
 
@@ -677,7 +677,7 @@ buildGYP() {
 }
 
 buildTelegram() {
-  travisStartFold "Build tdesktop"
+  travisStartFold "Build Telegreat"
 
   cd "$UPSTREAM/Telegram/gyp"
   "$GYP_PATH/gyp" \
@@ -698,7 +698,7 @@ buildTelegram() {
       -Dlinux_lib_crypto=-lcrypto \
       -Dlinux_lib_icu=-licuuc\ -licutu\ -licui18n \
       --depth=. --generator-output=.. --format=cmake -Goutput_dir=../out \
-      Telegram.gyp
+      Telegreat.gyp
   cd "$UPSTREAM/out/Debug"
 
   export ASM="gcc"
@@ -707,7 +707,7 @@ buildTelegram() {
 }
 
 check() {
-  local filePath="$UPSTREAM/out/Debug/Telegram"
+  local filePath="$UPSTREAM/out/Debug/Telegreat"
   if test -f "$filePath"; then
     success_msg "Build successfully done! :)"
 

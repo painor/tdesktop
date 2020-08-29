@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "settings/settings_common.h"
 #include "settings/settings_chat.h"
+#include "settings/settings_great.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/wrap/slide_wrap.h"
 #include "ui/widgets/labels.h"
@@ -517,6 +518,7 @@ void Advanced::setupContent(not_null<Window::SessionController*> controller) {
 		AddSkip(content);
 	}
 	SetupDataStorage(controller, content);
+	GreatSetting(controller, content);
 	SetupAutoDownload(controller, content);
 	SetupSystemIntegration(content, [=](Type type) {
 		_showOther.fire_copy(type);

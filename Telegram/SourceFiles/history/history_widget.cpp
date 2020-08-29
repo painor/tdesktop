@@ -386,6 +386,7 @@ HistoryWidget::HistoryWidget(
 
 	InitMessageField(controller, _field);
 	_fieldAutocomplete->hide();
+	connect(_fieldAutocomplete, SIGNAL(adminChosen(FieldAutocomplete::ChooseMethod)), this, SLOT(onAdminInsert()));
 	connect(_fieldAutocomplete, SIGNAL(mentionChosen(UserData*,FieldAutocomplete::ChooseMethod)), this, SLOT(onMentionInsert(UserData*)));
 	connect(_fieldAutocomplete, SIGNAL(hashtagChosen(QString,FieldAutocomplete::ChooseMethod)), this, SLOT(onHashtagOrBotCommandInsert(QString,FieldAutocomplete::ChooseMethod)));
 	connect(_fieldAutocomplete, SIGNAL(botCommandChosen(QString,FieldAutocomplete::ChooseMethod)), this, SLOT(onHashtagOrBotCommandInsert(QString,FieldAutocomplete::ChooseMethod)));
@@ -1005,6 +1006,31 @@ void HistoryWidget::start() {
 	});
 }
 
+void HistoryWidget::onAdminInsert() {
+	QString entityTag;
+	_field->insertTag("@\u2060admin", "https://t.me/Telegreat/9487", false);
+
+	auto group = peer()->asMegagroup();
+	auto info = group->mgInfo.get();
+
+	if (auto creator = group->mgInfo->creator) {
+		entityTag = PrepareMentionTag(creator);
+		_field->insertTag("\u2060", entityTag, false);
+	}
+
+	auto admins = group->mgInfo->admins;
+	for (auto it=admins.cbegin(); it!=admins.cend(); it++) {
+		if (auto user = Auth().data().user(it->first)) {
+            if (user->isBot())
+                continue;
+			entityTag = PrepareMentionTag(user);
+			_field->insertTag("\u2060", entityTag, false);
+		}
+	}
+
+	_field->textCursor().insertText(" ");
+}
+
 void HistoryWidget::onMentionInsert(UserData *user) {
 	QString replacement, entityTag;
 	if (user->username.isEmpty()) {
@@ -1012,10 +1038,11 @@ void HistoryWidget::onMentionInsert(UserData *user) {
 		if (replacement.isEmpty()) {
 			replacement = user->name;
 		}
-		entityTag = PrepareMentionTag(user);
 	} else {
 		replacement = '@' + user->username;
 	}
+	if (!user->botInfo)
+		entityTag = PrepareMentionTag(user);
 	_field->insertTag(replacement, entityTag);
 }
 

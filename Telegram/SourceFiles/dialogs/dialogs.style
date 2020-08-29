@@ -269,6 +269,66 @@ dialogsSearchFromPalette: TextPalette(defaultTextPalette) {
 	linkFg: dialogsNameFg;
 }
 
+dialogsChatTabsPrivateButton: IconButton {
+    width: 45px;
+    height: 45px;
+
+    icon: icon {{ "tab_private", dialogsMenuIconFg }};
+    iconOver: icon {{ "tab_private", windowBgActive }};
+    iconPosition: point(7px, 7px);
+
+    rippleAreaPosition: point(0px, 0px);
+    rippleAreaSize: 45px;
+    ripple: RippleAnimation(defaultRippleAnimation) {
+        color: windowBgOver;
+    }
+}
+
+dialogsChatTabsBotButton: IconButton {
+    width: 45px;
+    height: 45px;
+
+    icon: icon {{ "tab_bot", dialogsMenuIconFg }};
+    iconOver: icon {{ "tab_bot", windowBgActive }};
+    iconPosition: point(7px, 7px);
+
+    rippleAreaPosition: point(0px, 0px);
+    rippleAreaSize: 45px;
+    ripple: RippleAnimation(defaultRippleAnimation) {
+        color: windowBgOver;
+    }
+}
+
+dialogsChatTabsGroupButton: IconButton {
+    width: 45px;
+    height: 45px;
+
+    icon: icon {{ "tab_group", dialogsMenuIconFg }};
+    iconOver: icon {{ "tab_group", windowBgActive }};
+    iconPosition: point(7px, 7px);
+
+    rippleAreaPosition: point(0px, 0px);
+    rippleAreaSize: 45px;
+    ripple: RippleAnimation(defaultRippleAnimation) {
+        color: windowBgOver;
+    }
+}
+
+dialogsChatTabsChannelButton: IconButton {
+    width: 45px;
+    height: 45px;
+
+    icon: icon {{ "tab_channel", dialogsMenuIconFg }};
+    iconOver: icon {{ "tab_channel", windowBgActive }};
+    iconPosition: point(7px, 7px);
+
+    rippleAreaPosition: point(0px, 0px);
+    rippleAreaSize: 45px;
+    ripple: RippleAnimation(defaultRippleAnimation) {
+        color: windowBgOver;
+    }
+}
+
 dialogsScamPadding: margins(2px, 0px, 2px, 0px);
 dialogsScamFont: font(9px semibold);
 dialogsScamSkip: 4px;

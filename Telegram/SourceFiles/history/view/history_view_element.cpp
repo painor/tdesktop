@@ -20,6 +20,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/stickers_emoji_pack.h"
 #include "data/data_session.h"
 #include "data/data_groups.h"
+#include "data/data_user.h"
 #include "data/data_media_types.h"
 #include "lang/lang_keys.h"
 #include "layout.h"
@@ -335,6 +336,9 @@ void Element::refreshMedia() {
 	const auto item = data();
 	const auto media = item->media();
 	if (media && media->canBeGrouped()) {
+		if (cIgnoreBlocked() && item->author()->isUser() && item->author()->asUser()->isBlocked()) {
+			return;
+		}
 		if (const auto group = history()->owner().groups().find(item)) {
 			if (group->items.back() != item) {
 				_media = nullptr;
@@ -349,6 +353,9 @@ void Element::refreshMedia() {
 			}
 			return;
 		}
+	}
+	if (cIgnoreBlocked() && item->author()->isUser() && item->author()->asUser()->isBlocked()) {
+		return;
 	}
 	const auto session = &history()->session();
 	if (const auto media = _data->media()) {

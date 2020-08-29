@@ -251,7 +251,7 @@ auto GenerateUserString(MTPint userId) {
 		EntityType::MentionName,
 		0,
 		name.text.size(),
-		entityData });
+		entityData});
 	auto username = user->userName();
 	if (username.isEmpty()) {
 		return name;

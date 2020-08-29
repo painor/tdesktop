@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/settings_common.h"
 
 #include "settings/settings_chat.h"
+#include "settings/settings_great.h"
 #include "settings/settings_advanced.h"
 #include "settings/settings_information.h"
 #include "settings/settings_main.h"

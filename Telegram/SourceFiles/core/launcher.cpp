@@ -246,7 +246,7 @@ void Launcher::init() {
 
 	prepareSettings();
 
-	QApplication::setApplicationName(qsl("TelegramDesktop"));
+	QApplication::setApplicationName(qsl("Telegreat"));
 
 #if defined(Q_OS_LINUX) && QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 	QApplication::setDesktopFileName(qsl(MACRO_TO_STRING(TDESKTOP_LAUNCHER_BASENAME)) + ".desktop");
@@ -277,7 +277,7 @@ int Launcher::exec() {
 
 	auto result = executeApplication();
 
-	DEBUG_LOG(("Telegram finished, result: %1").arg(result));
+	DEBUG_LOG(("Telegreat finished, result: %1").arg(result));
 
 	if (!UpdaterDisabled() && cRestartingUpdate()) {
 		DEBUG_LOG(("Sandbox Info: executing updater to install update."));

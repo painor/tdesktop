@@ -33,6 +33,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_session_controller.h"
 #include "observer_peer.h"
 #include "storage/storage_shared_media.h"
+#include "window/themes/window_theme.h"
 #include "data/data_session.h"
 #include "data/data_game.h"
 #include "data/data_media_types.h"

@@ -11,10 +11,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings.h"
 
 constexpr str_const AppNameOld = "Telegram Win (Unofficial)";
-constexpr str_const AppName = "Telegram Desktop";
+constexpr str_const AppName = "Telegreat";
 
-constexpr str_const AppId = "{53F49750-6209-4FBF-9CA8-7A333C87D1ED}"; // used in updater.cpp and Setup.iss for Windows
-constexpr str_const AppFile = "Telegram";
+constexpr str_const AppId = "{53F49750-5EA2-5EA2-5EA2-7A333C87D1ED}"; // used in updater.cpp and Setup.iss for Windows
+constexpr str_const AppFile = "Telegreat";
 
 enum {
 	MaxSelectedItems = 100,
@@ -66,9 +66,9 @@ enum {
 
 inline const char *cGUIDStr() {
 #ifndef OS_MAC_STORE
-	static const char *gGuidStr = "{87A94AB0-E370-4cde-98D3-ACC110C5967D}";
+	static const char *gGuidStr = "{87A94AB0-5EA2-5EA2-98D3-ACC110C5967D}";
 #else // OS_MAC_STORE
-	static const char *gGuidStr = "{E51FB841-8C0B-4EF9-9E9E-5A0078567627}";
+	static const char *gGuidStr = "{E51FB841-5EA2-5EA2-9E9E-5A0078567627}";
 #endif // OS_MAC_STORE
 
 	return gGuidStr;
@@ -126,17 +126,17 @@ inline int builtInDcsCountIPv6() {
 
 static const char *UpdatesPublicKey = "\
 -----BEGIN RSA PUBLIC KEY-----\n\
-MIGJAoGBAMA4ViQrjkPZ9xj0lrer3r23JvxOnrtE8nI69XLGSr+sRERz9YnUptnU\n\
-BZpkIfKaRcl6XzNJiN28cVwO1Ui5JSa814UAiDHzWUqCaXUiUEQ6NmNTneiGx2sQ\n\
-+9PKKlb8mmr3BB9A45ZNwLT6G9AK3+qkZLHojeSA+m84/a6GP4svAgMBAAE=\n\
+MIGJAoGBAMT5V5SKpButqB0N30US1RZWto9054ss/oCAjjR3jUFMuadr82i6u30I\n\
+N/DdzTg7ML8uam1Zu99DStaOJaNFMOaGoyea/MGUaR/IgoB0rNotjlgJpN+Sv+KN\n\
+nzD00iPN8cQJZUA7x+ER/oUKgnULiA+Z3JLU5nP+LjAXPnSL0QpJAgMBAAE=\n\
 -----END RSA PUBLIC KEY-----\
 ";
 
 static const char *UpdatesPublicBetaKey = "\
 -----BEGIN RSA PUBLIC KEY-----\n\
-MIGJAoGBALWu9GGs0HED7KG7BM73CFZ6o0xufKBRQsdnq3lwA8nFQEvmdu+g/I1j\n\
-0LQ+0IQO7GW4jAgzF/4+soPDb6uHQeNFrlVx1JS9DZGhhjZ5rf65yg11nTCIHZCG\n\
-w/CVnbwQOw0g5GBwwFV3r0uTTvy44xx8XXxk+Qknu4eBCsmrAFNnAgMBAAE=\n\
+MIGJAoGBAMT5V5SKpButqB0N30US1RZWto9054ss/oCAjjR3jUFMuadr82i6u30I\n\
+N/DdzTg7ML8uam1Zu99DStaOJaNFMOaGoyea/MGUaR/IgoB0rNotjlgJpN+Sv+KN\n\
+nzD00iPN8cQJZUA7x+ER/oUKgnULiA+Z3JLU5nP+LjAXPnSL0QpJAgMBAAE=\n\
 -----END RSA PUBLIC KEY-----\
 ";
 
@@ -164,8 +164,8 @@ constexpr auto ApiHash = MACRO_TO_STRING(TDESKTOP_API_HASH);
 
 #error You are required to provide API_ID and API_HASH.
 
-constexpr auto ApiId = 17349;
-constexpr auto ApiHash = "344583e45741c457fe1862106095a5eb";
+constexpr auto ApiId = 45735;
+constexpr auto ApiHash = "6685194f787f91058cbc0fe77b4eb139";
 
 #endif // TDESKTOP_API_ID && TDESKTOP_API_HASH
 

@@ -304,7 +304,7 @@ struct Data {
 
 	Adaptive::WindowLayout AdaptiveWindowLayout = Adaptive::WindowLayout::Normal;
 	Adaptive::ChatLayout AdaptiveChatLayout = Adaptive::ChatLayout::Normal;
-	bool AdaptiveForWide = true;
+	bool AdaptiveForWide = false;
 	base::Observable<void> AdaptiveChanged;
 
 	bool DialogsModeEnabled = false;
@@ -397,7 +397,11 @@ struct Data {
 	bool LocalPasscode = false;
 	base::Observable<void> LocalPasscodeChanged;
 
-	base::Variable<DBIWorkMode> WorkMode = { dbiwmWindowAndTray };
+#ifdef Q_OS_WIN
+    base::Variable<DBIWorkMode> WorkMode = { dbiwmWindowAndTray };
+#else
+    base::Variable<DBIWorkMode> WorkMode = { dbiwmWindowOnly };
+#endif // Q_OS_WIN
 
 	base::Observable<void> UnreadCounterUpdate;
 	base::Observable<void> PeerChooseCancel;

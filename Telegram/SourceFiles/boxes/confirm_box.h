@@ -176,6 +176,7 @@ private:
 		QString checkbox;
 		TextWithEntities description;
 	};
+	void restrictUser(not_null<UserData*> user, const MTPChatBannedRights &oldRights, const MTPChatBannedRights &newRights);
 	void deleteAndClear();
 	[[nodiscard]] PeerData *checkFromSinglePeer() const;
 	[[nodiscard]] bool hasScheduledMessages() const;
@@ -195,8 +196,10 @@ private:
 	object_ptr<Ui::FlatLabel> _text = { nullptr };
 	object_ptr<Ui::Checkbox> _revoke = { nullptr };
 	object_ptr<Ui::Checkbox> _banUser = { nullptr };
+	object_ptr<Ui::Checkbox> _resUser = { nullptr };
 	object_ptr<Ui::Checkbox> _reportSpam = { nullptr };
 	object_ptr<Ui::Checkbox> _deleteAll = { nullptr };
+	object_ptr<Ui::FlatLabel> _warn = { nullptr };
 
 	Fn<void()> _deleteConfirmedCallback;
 

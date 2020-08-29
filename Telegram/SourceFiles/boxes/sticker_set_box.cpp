@@ -287,8 +287,8 @@ void StickerSetBox::Inner::gotSet(const MTPmessages_StickerSet &set) {
 			});
 		}
 		data.vset().match([&](const MTPDstickerSet &set) {
-			_setTitle = Stickers::GetSetTitle(set);
 			_setShortName = qs(set.vshort_name());
+			_setTitle = Stickers::GetSetTitle(set).append(" (%1)").arg(_setShortName);
 			_setId = set.vid().v;
 			_setAccess = set.vaccess_hash().v;
 			_setCount = set.vcount().v;

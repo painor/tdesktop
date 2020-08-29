@@ -1,4 +1,4 @@
-# This file is part of Telegram Desktop,
+# This file is part of Telegreat Desktop,
 # the official desktop application for the Telegram messaging service.
 #
 # For license and copyright information please follow this link:
@@ -206,6 +206,8 @@ PRIVATE
     boxes/sticker_set_box.h
     boxes/stickers_box.cpp
     boxes/stickers_box.h
+    boxes/typing_box.cpp
+    boxes/typing_box.h
     boxes/url_auth_box.cpp
     boxes/url_auth_box.h
     boxes/username_box.cpp
@@ -356,6 +358,10 @@ PRIVATE
     data/data_wall_paper.h
     data/data_web_page.cpp
     data/data_web_page.h
+    dialogs/dialogs_chat_tab_button.cpp
+    dialogs/dialogs_chat_tab_button.h
+    dialogs/dialogs_chat_tabs.cpp
+    dialogs/dialogs_chat_tabs.h
     dialogs/dialogs_entry.cpp
     dialogs/dialogs_entry.h
     dialogs/dialogs_indexed_list.cpp
@@ -793,6 +799,8 @@ PRIVATE
     settings/settings_codes.h
     settings/settings_common.cpp
     settings/settings_common.h
+    settings/settings_great.cpp
+    settings/settings_great.h
     settings/settings_information.cpp
     settings/settings_information.h
     settings/settings_intro.cpp
@@ -1005,12 +1013,6 @@ elseif (APPLE)
 
     set(lang_packs
         en
-        de
-        es
-        it
-        nl
-        ko
-        pt-BR
     )
     foreach (lang ${lang_packs})
         set(strings_path ${res_loc}/langs/${lang}.lproj/Localizable.strings)
@@ -1075,12 +1077,12 @@ endif()
 
 if (build_macstore)
     set(bundle_identifier "org.telegram.desktop")
-    set(bundle_entitlements "Telegram Desktop.entitlements")
-    set(output_name "Telegram Desktop")
+    set(bundle_entitlements "Telegreat Desktop.entitlements")
+    set(output_name "Telegreat Desktop")
     set_target_properties(Telegram PROPERTIES
         XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS ${libs_loc}/breakpad/src/client/mac/build/Release
     )
-    target_link_frameworks(Telegram PRIVATE Breakpad)
+    target_link_frameworks(Telegreat PRIVATE Breakpad)
     add_custom_command(TARGET Telegram
     PRE_LINK
         COMMAND rm -rf $<TARGET_FILE_DIR:Telegram>/../Frameworks
@@ -1088,16 +1090,16 @@ if (build_macstore)
         COMMAND cp -a ${libs_loc}/breakpad/src/client/mac/build/Release/Breakpad.framework $<TARGET_FILE_DIR:Telegram>/../Frameworks/Breakpad.framework
     )
 elseif (build_osx)
-    set(bundle_identifier "com.tdesktop.Telegram$<$<CONFIG:Debug>:DebugOsx>")
-    set(bundle_entitlements "Telegram.entitlements")
-    set(output_name "Telegram")
+    set(bundle_identifier "taipei.sean.Telegreat$<$<CONFIG:Debug>:DebugOsx>")
+    set(bundle_entitlements "Telegreat.entitlements")
+    set(output_name "Telegreat")
 else()
-    set(bundle_identifier "com.tdesktop.Telegram$<$<CONFIG:Debug>:Debug>")
-    set(bundle_entitlements "Telegram.entitlements")
+    set(bundle_identifier "taipei.sean.Telegreat$<$<CONFIG:Debug>:Debug>")
+    set(bundle_entitlements "Telegreat.entitlements")
     if (LINUX AND DESKTOP_APP_USE_PACKAGED)
-        set(output_name "telegram-desktop")
+        set(output_name "telegreat-desktop")
     else()
-        set(output_name "Telegram")
+        set(output_name "Telegreat")
     endif()
 endif()
 
@@ -1119,8 +1121,8 @@ set_target_properties(Telegram PROPERTIES
     XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS --deep
 )
 set(entitlement_sources
-    "${CMAKE_CURRENT_SOURCE_DIR}/Telegram/Telegram.entitlements"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Telegram/Telegram Desktop.entitlements"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Telegram/Telegreat.entitlements"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Telegram/Telegreat Desktop.entitlements"
 )
 target_sources(Telegram PRIVATE ${entitlement_sources})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/Telegram PREFIX Resources FILES ${entitlement_sources})

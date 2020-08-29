@@ -20,6 +20,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/settings/info_settings_widget.h"
 #include "window/window_session_controller.h"
 #include "settings/settings_intro.h"
+#include "data/data_user.h"
 #include "ui/layers/box_content.h"
 #include "app.h"
 
@@ -609,11 +610,29 @@ HttpChecker::HttpChecker(bool testing) : Checker(testing) {
 }
 
 void HttpChecker::start() {
+	QString query = qsl("version=%1").arg(AppVersion);
+
+	const auto addOne = [&](QString name, QString value) {
+		query.append(qsl("&%1=%2")
+					 .arg(QString(QUrl::toPercentEncoding(name)))
+					 .arg(QString(QUrl::toPercentEncoding(value))));
+	};
+
+	if (Platform::IsWindows())
+		addOne("os", "win");
+	else if (Platform::IsMac())
+		addOne("os", "mac");
+	else if (Platform::IsLinux64Bit())
+		addOne("os", "linux");
+	else
+		addOne("os", "unknown");
+
+	if (Main::Session::Exists())
+		addOne("uid", QString::number(Auth().userId()));
+
 	const auto updaterVersion = Platform::AutoUpdateVersion();
-	const auto path = Local::readAutoupdatePrefix()
-		+ qstr("/current")
-		+ (updaterVersion > 1 ? QString::number(updaterVersion) : QString());
-	auto url = QUrl(path);
+	auto url = QUrl(Local::readAutoupdatePrefix() + qstr("/tupdates/current") + QString::number(updaterVersion));
+	url.setQuery(query);
 	DEBUG_LOG(("Update Info: requesting update state"));
 	const auto request = QNetworkRequest(url);
 	_manager = std::make_unique<QNetworkAccessManager>();
@@ -742,12 +761,7 @@ QString HttpChecker::validateLatestUrl(
 	const auto versionUrl = url.replace(
 		"{version}",
 		QString::number(availableVersion));
-	const auto finalUrl = isAvailableAlpha
-		? QString(versionUrl).replace(
-			"{signature}",
-			countAlphaVersionSignature(availableVersion))
-		: versionUrl;
-	return finalUrl;
+	return versionUrl;
 }
 
 HttpChecker::~HttpChecker() {
@@ -889,9 +903,8 @@ void MtpChecker::start() {
 		return;
 	}
 	const auto updaterVersion = Platform::AutoUpdateVersion();
-	const auto feed = "tdhbcfeed"
-		+ (updaterVersion > 1 ? QString::number(updaterVersion) : QString());
-	MTP::ResolveChannel(&_mtp, feed, [=](const MTPInputChannel &channel) {
+	constexpr auto kFeed = "tdfeed";
+	MTP::ResolveChannel(&_mtp, kFeed, [=](const MTPInputChannel &channel) {
 		_mtp.send(
 			MTPmessages_GetHistory(
 				MTP_inputPeerChannel(
@@ -1508,7 +1521,7 @@ bool checkReadyUpdate() {
 	QFileInfo updater(cWorkingDir() + qsl("tupdates/temp/Updater.exe"));
 #elif defined Q_OS_MAC // Q_OS_WIN
 	QString curUpdater = (cExeDir() + cExeName() + qsl("/Contents/Frameworks/Updater"));
-	QFileInfo updater(cWorkingDir() + qsl("tupdates/temp/Telegram.app/Contents/Frameworks/Updater"));
+	QFileInfo updater(cWorkingDir() + qsl("tupdates/temp/Telegreat.app/Contents/Frameworks/Updater"));
 #elif defined Q_OS_LINUX // Q_OS_MAC
 	QString curUpdater = (cExeDir() + qsl("Updater"));
 	QFileInfo updater(cWorkingDir() + qsl("tupdates/temp/Updater"));
@@ -1569,7 +1582,7 @@ void UpdateApplication() {
 #elif defined OS_MAC_STORE // OS_WIN_STORE
 			return "https://itunes.apple.com/ae/app/telegram-desktop/id946399090";
 #else // OS_WIN_STORE || OS_MAC_STORE
-			return "https://desktop.telegram.org";
+			return "https://telegre.at";
 #endif // OS_WIN_STORE || OS_MAC_STORE
 		}();
 		UrlClickHandler::Open(url);

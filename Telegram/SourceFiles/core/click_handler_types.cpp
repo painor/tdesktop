@@ -29,7 +29,7 @@ namespace {
 
 bool UrlRequiresConfirmation(const QUrl &url) {
 	using namespace qthelp;
-	return !regex_match(qsl("(^|\\.)(telegram\\.org|telegra\\.ph|telesco\\.pe)$"), url.host(), RegExOption::CaseInsensitive);
+	return !regex_match(qsl("(^|\\.)(telegram\\.org|telegra\\.ph|telesco\\.pe|tlgr\\.tw|sean\\.taipei|sean\\.cat|telegre\\.at)$"), url.host(), RegExOption::CaseInsensitive);
 }
 
 } // namespace

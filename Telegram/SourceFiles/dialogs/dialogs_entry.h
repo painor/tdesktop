@@ -37,6 +37,18 @@ enum class Mode {
 	Important = 0x01,
 };
 
+enum class EntryType : unsigned {
+	None = 0x00,
+	Private = 0x01,
+	Bot = 0x02,
+	Group = 0x04,
+	Channel = 0x08,
+	TypeMask = 0x0F,  // only the types, disregards favorite status
+	All = 0x0F
+};
+using EntryTypes = base::flags<EntryType>;
+inline constexpr bool is_flag_type(EntryType) { return true; }
+
 struct PositionChange {
 	int from = -1;
 	int to = -1;
@@ -87,6 +99,20 @@ inline UnreadState operator-(const UnreadState &a, const UnreadState &b) {
 	return result;
 }
 
+inline bool operator==(const UnreadState &a, const UnreadState &b) {
+	return (a.messages == b.messages
+	&& a.messagesMuted == b.messagesMuted
+	&& a.chats == b.chats
+	&& a.chatsMuted == b.chatsMuted
+	&& a.marks == b.marks
+	&& a.marksMuted == b.marksMuted
+	&& a.known == b.known);
+}
+
+inline bool operator!=(const UnreadState &a, const UnreadState &b) {
+	return !(a == b);
+}
+
 class Entry {
 public:
 	Entry(not_null<Data::Session*> owner, const Key &key);
@@ -103,6 +129,7 @@ public:
 	}
 	int posInChatList(Mode list) const;
 	not_null<Row*> addToChatList(Mode list);
+	void setRowInCurrentTab(Row *row);
 	void removeFromChatList(Mode list);
 	void removeChatListEntryByLetter(Mode list, QChar letter);
 	void addChatListEntryByLetter(
@@ -110,6 +137,7 @@ public:
 		QChar letter,
 		not_null<Row*> row);
 	void updateChatListEntry() const;
+	void updateChatListEntry(Row *row) const;
 	bool isPinnedDialog() const {
 		return _pinnedIndex > 0;
 	}
@@ -131,6 +159,7 @@ public:
 	static constexpr auto kArchiveFixOnTopIndex = 1;
 	static constexpr auto kProxyPromotionFixOnTopIndex = 2;
 
+	virtual EntryTypes getEntryType() const { return EntryType::None; }
 	virtual bool toImportant() const = 0;
 	virtual bool shouldBeInChatList() const = 0;
 	virtual int chatListUnreadCount() const = 0;
@@ -193,11 +222,13 @@ private:
 	RowsByLetter &chatListLinks(Mode list);
 	const RowsByLetter &chatListLinks(Mode list) const;
 	Row *mainChatListLink(Mode list) const;
+	Row *rowInCurrentTab() const;
 
 	not_null<IndexedList*> myChatsList(Mode list) const;
 
 	not_null<Data::Session*> _owner;
 	Dialogs::Key _key;
+	Row *_rowInCurrentTab = nullptr;
 	RowsByLetter _chatListLinks[2];
 	uint64 _sortKeyInChatList = 0;
 	int _pinnedIndex = 0;

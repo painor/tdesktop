@@ -105,6 +105,7 @@ private:
 	void installSet(uint64 setId);
 	int getTopSkip() const;
 	void saveChanges();
+	void exportAllSets();
 
 	QPixmap grabContentCache();
 
@@ -149,6 +150,8 @@ private:
 	Stickers::Order _localRemoved;
 
 };
+
+int stickerPacksCount(bool includeArchivedOfficial = false);
 
 // This class is hold in header because it requires Qt preprocessing.
 class StickersBox::Inner

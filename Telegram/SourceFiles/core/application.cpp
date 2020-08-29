@@ -169,9 +169,10 @@ void Application::run() {
 	startLocalStorage();
 	ValidateScale();
 
-	if (Local::oldSettingsVersion() < AppVersion) {
+	// Telegreat: Set as default open app
+//	if (Local::oldSettingsVersion() < AppVersion) {
 		psNewVersion();
-	}
+//	}
 
 	if (cLaunchMode() == LaunchModeAutoStart && !cAutoStart()) {
 		psAutoStart(false, true);

@@ -5,7 +5,7 @@ about: Report errors or unexpected behavior.
 ---
 
 <!--
-Thanks for reporting issues of Telegram Desktop!
+Thanks for reporting issues of Telegreat!
 
 To make it easier for us to help you please enter detailed information below.
 -->
@@ -23,7 +23,7 @@ Tell us what happens instead
 ### Configuration
 **Operating system:**
 
-**Version of Telegram Desktop:**
+**Version of Telegreat:** v1.2.8 beta X
 
 **Used theme**:
 

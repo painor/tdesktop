@@ -305,6 +305,34 @@ void CloudManager::requestLanguageList() {
 		for (const auto &language : result.v) {
 			languages.push_back(ParseLanguage(language));
 		}
+
+		/* Order: Official -> xx-beta -> third-party */
+		languages.push_back({"zh-hant-beta", "zh-hant-beta", "", "Chinese", "正體中文"});
+		languages.push_back({"ja-beta", "ja-beta", "", "Japanese", "日本語"});
+
+		languages.push_back({"ar-beta", "ar-beta", "", "Arabic", "العربية"});
+		languages.push_back({"eu-beta", "eu-beta", "", "Basque", "Euskara"});
+		languages.push_back({"be-beta", "be-beta", "", "Belarusian", "Беларуская"});
+		languages.push_back({"cs-beta", "cs-beta", "", "Czech", "Čeština"});
+		languages.push_back({"eo-beta", "eo-beta", "", "Esperanto", "Esperanto"});
+		languages.push_back({"fi-beta", "fi-beta", "", "Finnish", "Suomi"});
+		languages.push_back({"gl-beta", "gl-beta", "", "Galician", "Galego"});
+		languages.push_back({"he-beta", "he-beta", "", "Hebrew", "עברית"});
+		languages.push_back({"hu-beta", "hu-beta", "", "Hungarian", "Magyar"});
+		languages.push_back({"nb-beta", "nb-beta", "", "Norwegian", "Norsk (Bokmål)"});
+		languages.push_back({"fa-beta", "fa-beta", "", "Persian", "فارسی"});
+		languages.push_back({"pl-beta", "pl-beta", "", "Polish", "Polski"});
+		languages.push_back({"sr-beta", "sr-beta", "", "Serbian", "Српски"});
+		languages.push_back({"sk-beta", "sk-beta", "", "Slovak", "Slovenčina"});
+		languages.push_back({"sv-beta", "sv-beta", "", "Swedish", "Svenska"});
+		languages.push_back({"ta-beta", "ta-beta", "", "Tamil", "தமிழ்"});
+		languages.push_back({"tk-beta", "tk-beta", "", "Turkmen", "Türkmen"});
+
+		languages.push_back({"zh-hans-beta", "zh-hans-beta", "", "Chinese (Simplified)", "簡體中文"});
+		languages.push_back({"hongkong", "hongkong", "", "Chinese (Hong Kong)", "中文 (香港)"});
+		languages.push_back({"encha", "encha", "", "Chinese (Enchanter)", "魔法師中文"});
+		languages.push_back({"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"});
+
 		if (_languages != languages) {
 			_languages = languages;
 			_languagesChanged.notify();

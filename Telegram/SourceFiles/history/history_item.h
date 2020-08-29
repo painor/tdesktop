@@ -10,6 +10,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/runtime_composer.h"
 #include "base/flags.h"
 #include "base/value_ordering.h"
+#include "history/history.h"
+#include "data/data_chat.h"
+#include "data/data_channel.h"
 #include "data/data_media_types.h"
 
 enum class UnreadMentionType;
@@ -327,6 +330,8 @@ public:
 
 	[[nodiscard]] virtual std::unique_ptr<HistoryView::Element> createView(
 		not_null<HistoryView::ElementDelegate*> delegate) = 0;
+
+	bool isDeleted = false;
 
 	virtual ~HistoryItem();
 

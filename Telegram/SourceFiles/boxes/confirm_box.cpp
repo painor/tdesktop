@@ -21,6 +21,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/image/image.h"
 #include "ui/text/text_utilities.h"
 #include "ui/empty_userpic.h"
+#include "boxes/peers/edit_participant_box.h"
+#include "boxes/peers/edit_participants_box.h"
 #include "core/click_handler_types.h"
 #include "window/window_session_controller.h"
 #include "storage/localstorage.h"
@@ -531,17 +533,36 @@ void DeleteMessagesBox::prepare() {
 				: st::attentionBoxButton);
 		}
 		if (auto revoke = revokeText(peer)) {
-			_revoke.create(this, revoke->checkbox, false, st::defaultBoxCheckbox);
+			_revoke.create(this, revoke->checkbox, true, st::defaultBoxCheckbox);
 			appendDetails(std::move(revoke->description));
 		}
 	} else if (_moderateFrom) {
 		Assert(_moderateInChannel != nullptr);
 
-		details.text = tr::lng_selected_delete_sure_this(tr::now);
+		details.text = tr::lng_selected_delete_sure_this(tr::now).append(" (%1)").arg(_moderateFrom->firstName);
+
+		PeerId peerId = _moderateFrom->id;
+		History *history = Auth().data().history(peerId);
+		HistoryItem *msg = history->chatListMessage();
+		bool defaultBan = (msg == nullptr);
+
 		if (_moderateBan) {
-			_banUser.create(this, tr::lng_ban_user(tr::now), false, st::defaultBoxCheckbox);
+			_banUser.create(this, tr::lng_ban_user(tr::now), defaultBan, st::defaultBoxCheckbox);
+			_resUser.create(this, tr::lng_context_restrict_user(tr::now), false, st::defaultBoxCheckbox);
+
+			_banUser->checkedChanges(
+			) | rpl::start_with_next([=](bool checked) {
+				if (checked && _resUser->checked())
+					_resUser->setChecked(false);
+			}, _banUser->lifetime());
+
+			_resUser->checkedChanges(
+			) | rpl::start_with_next([=](bool checked) {
+				if (checked && _banUser->checked())
+					_banUser->setChecked(false);
+			}, _resUser->lifetime());
 		}
-		_reportSpam.create(this, tr::lng_report_spam(tr::now), false, st::defaultBoxCheckbox);
+		_reportSpam.create(this, tr::lng_report_spam(tr::now), defaultBan, st::defaultBoxCheckbox);
 		if (_moderateDeleteAll) {
 			_deleteAll.create(this, tr::lng_delete_all_from(tr::now), false, st::defaultBoxCheckbox);
 		}
@@ -553,7 +574,7 @@ void DeleteMessagesBox::prepare() {
 			auto count = int(_ids.size());
 			if (hasScheduledMessages()) {
 			} else if (auto revoke = revokeText(peer)) {
-				_revoke.create(this, revoke->checkbox, false, st::defaultBoxCheckbox);
+				_revoke.create(this, revoke->checkbox, true, st::defaultBoxCheckbox);
 				appendDetails(std::move(revoke->description));
 			} else if (peer->isChannel()) {
 				if (peer->isMegagroup()) {
@@ -575,10 +596,13 @@ void DeleteMessagesBox::prepare() {
 	addButton(tr::lng_cancel(), [=] { closeBox(); });
 
 	auto fullHeight = st::boxPadding.top() + _text->height() + st::boxPadding.bottom();
+	if (_warn)
+		fullHeight += _warn->height();
 	if (_moderateFrom) {
 		fullHeight += st::boxMediumSkip;
 		if (_banUser) {
 			fullHeight += _banUser->heightNoMargins() + st::boxLittleSkip;
+			fullHeight += _resUser->heightNoMargins() + st::boxLittleSkip;
 		}
 		fullHeight += _reportSpam->heightNoMargins();
 		if (_deleteAll) {
@@ -710,22 +734,30 @@ void DeleteMessagesBox::resizeEvent(QResizeEvent *e) {
 	BoxContent::resizeEvent(e);
 
 	_text->moveToLeft(st::boxPadding.left(), st::boxPadding.top());
+	auto top = _text->bottomNoMargins() + st::boxMediumSkip;
 	if (_moderateFrom) {
-		auto top = _text->bottomNoMargins() + st::boxMediumSkip;
 		if (_banUser) {
 			_banUser->moveToLeft(st::boxPadding.left(), top);
 			top += _banUser->heightNoMargins() + st::boxLittleSkip;
+		}
+		if (_resUser) {
+			_resUser->moveToLeft(st::boxPadding.left(), top);
+			top += _resUser->heightNoMargins() + st::boxLittleSkip;
 		}
 		_reportSpam->moveToLeft(st::boxPadding.left(), top);
 		top += _reportSpam->heightNoMargins() + st::boxLittleSkip;
 		if (_deleteAll) {
 			_deleteAll->moveToLeft(st::boxPadding.left(), top);
+			top += _deleteAll->heightNoMargins() + st::boxLittleSkip;
 		}
 	} else if (_revoke) {
 		const auto availableWidth = width() - 2 * st::boxPadding.left();
 		_revoke->resizeToNaturalWidth(availableWidth);
 		_revoke->moveToLeft(st::boxPadding.left(), _text->bottomNoMargins() + st::boxMediumSkip);
+		top += _revoke->heightNoMargins() + st::boxLittleSkip;
 	}
+	if (_warn)
+		_warn->moveToLeft(st::boxPadding.left(), top);
 }
 
 void DeleteMessagesBox::keyPressEvent(QKeyEvent *e) {
@@ -734,6 +766,19 @@ void DeleteMessagesBox::keyPressEvent(QKeyEvent *e) {
 	} else {
 		BoxContent::keyPressEvent(e);
 	}
+}
+
+void DeleteMessagesBox::restrictUser(
+		not_null<UserData*> user,
+		const MTPChatBannedRights &oldRights,
+		const MTPChatBannedRights &newRights) {
+	const auto done = [](const MTPChatBannedRights &newRights) {};
+	const auto callback = SaveRestrictedCallback(
+		_moderateInChannel,
+		user,
+		crl::guard(this, done),
+		nullptr);
+	callback(oldRights, newRights);
 }
 
 void DeleteMessagesBox::deleteAndClear() {
@@ -765,6 +810,35 @@ void DeleteMessagesBox::deleteAndClear() {
 				_moderateInChannel,
 				_moderateFrom,
 				MTP_chatBannedRights(MTP_flags(0), MTP_int(0)));
+		}
+		if (_resUser && _resUser->checked()) {
+			not_null<UserData*> user = _moderateFrom;
+
+			auto editRestrictions = [=](bool hasAdminRights, const MTPChatBannedRights &currentRights) {
+				auto weak = QPointer<DeleteMessagesBox>(this);
+				auto weakBox = std::make_shared<QPointer<EditRestrictedBox>>();
+				auto box = Box<EditRestrictedBox>(_moderateInChannel, user, hasAdminRights, currentRights);
+				box->setSaveCallback([=](
+						const MTPChatBannedRights &oldRights,
+						const MTPChatBannedRights &newRights) {
+					if (weak) {
+						weak->restrictUser(user, oldRights, newRights);
+					}
+					Ui::hideLayer();
+					if (*weakBox) {
+						(*weakBox)->closeBox();
+					}
+				});
+				*weakBox = Ui::show(
+					std::move(box),
+					Ui::LayerOption::KeepOther);
+			};
+
+			auto hasAdminRights = _moderateInChannel->mgInfo->lastAdmins.find(user) != _moderateInChannel->mgInfo->lastAdmins.cend();
+			auto bannedRights = MTP_chatBannedRights(
+				MTP_flags(~ChatRestriction::f_view_messages),
+				MTP_int(0));
+			editRestrictions(hasAdminRights, bannedRights);
 		}
 		if (_reportSpam->checked()) {
 			_moderateInChannel->session().api().request(
@@ -827,7 +901,8 @@ void DeleteMessagesBox::deleteAndClear() {
 	}
 
 	const auto session = _session;
-	Ui::hideLayer();
+	if (!_resUser || !_resUser->checked())
+		Ui::hideLayer();
 	session->data().sendHistoryChangeNotifications();
 }
 

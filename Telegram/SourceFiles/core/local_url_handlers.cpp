@@ -217,6 +217,19 @@ bool ShowPassport(
 		qthelp::UrlParamNameTransform::ToLower));
 }
 
+
+bool ResolveId(
+		Main::Session *session,
+		const Match &match,
+		const QVariant &context) {
+	if (!session) {
+		return false;
+	}
+	PeerId id = match->captured(1).toULongLong();
+	App::main()->ui_showPeerHistory(id, Window::SectionShow::Way::ClearStack, ShowAtTheEndMsgId);
+	return true;
+}
+
 bool ShowWallPaper(
 		Main::Session *session,
 		const Match &match,
@@ -253,6 +266,11 @@ bool ResolveUsername(
 	};
 	if (domain == qsl("telegrampassport")) {
 		return ShowPassportForm(params);
+	} else if (domain.toLower() == qsl("gotomsg") && params.contains(qsl("chat")) && params.contains(qsl("id"))) {
+			MsgId msgId = params.value(qsl("id")).toInt();
+			PeerId peerId = params.value(qsl("chat")).toULongLong() | PeerIdChannelShift;
+			App::main()->ui_showPeerHistory(peerId, Window::SectionShow::Way::ClearStack, msgId);
+			return true;
 	} else if (!valid(domain)) {
 		return false;
 	}
@@ -441,6 +459,10 @@ const std::vector<LocalUrlHandler> &LocalUrlHandlers() {
 		{
 			qsl("^passport/?\\?(.+)(#|$)"),
 			ShowPassport
+		},
+		{
+			qsl("^user\\?id=([0-9]+)(#|$)"),
+			ResolveId
 		},
 		{
 			qsl("^bg/?\\?(.+)(#|$)"),

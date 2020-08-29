@@ -26,11 +26,11 @@ const PROPERTYKEY pkey_AppUserModel_ID = { { 0x9F4C2855, 0x9F79, 0x4B39, { 0xA8,
 const PROPERTYKEY pkey_AppUserModel_StartPinOption = { { 0x9F4C2855, 0x9F79, 0x4B39, { 0xA8, 0xD0, 0xE1, 0xD4, 0x2D, 0xE1, 0xD5, 0xF3 } }, 12 };
 
 #ifdef OS_WIN_STORE
-const WCHAR AppUserModelIdRelease[] = L"Telegram.TelegramDesktop.Store";
+const WCHAR AppUserModelIdRelease[] = L"Telegram.Telegreat.Store";
 #else // OS_WIN_STORE
-const WCHAR AppUserModelIdRelease[] = L"Telegram.TelegramDesktop";
+const WCHAR AppUserModelIdRelease[] = L"Telegram.Telegreat";
 #endif // OS_WIN_STORE
-const WCHAR AppUserModelIdAlpha[] = L"Telegram.TelegramDesktop.Alpha";
+const WCHAR AppUserModelIdAlpha[] = L"Telegram.Telegreat.Alpha";
 
 } // namespace
 
@@ -252,16 +252,10 @@ bool validateShortcut() {
 	QString path = systemShortcutPath();
 	if (path.isEmpty() || cExeName().isEmpty()) return false;
 
-	if (cAlphaVersion()) {
-		path += qsl("TelegramAlpha.lnk");
-		if (validateShortcutAt(path)) return true;
-	} else {
-		if (validateShortcutAt(path + qsl("Telegram Desktop/Telegram.lnk"))) return true;
-		if (validateShortcutAt(path + qsl("Telegram Win (Unofficial)/Telegram.lnk"))) return true;
+	if (validateShortcutAt(path + qsl("Telegreat/Telegreat.lnk"))) return true;
 
-		path += qsl("Telegram.lnk");
-		if (validateShortcutAt(path)) return true;
-	}
+	path += qsl("Telegreat.lnk");
+	if (validateShortcutAt(path)) return true;
 
 	ComPtr<IShellLink> shellLink;
 	HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink));

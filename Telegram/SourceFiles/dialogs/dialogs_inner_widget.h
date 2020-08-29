@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #pragma once
 
 #include "dialogs/dialogs_key.h"
+#include "dialogs/dialogs_entry.h"
 #include "data/data_messages.h"
 #include "ui/effects/animations.h"
 #include "ui/rp_widget.h"
@@ -62,6 +63,7 @@ enum class WidgetState {
 
 class InnerWidget
 	: public Ui::RpWidget
+//	, public QObject
 	, public RPCSender
 	, private base::Subscriber {
 	Q_OBJECT
@@ -107,6 +109,9 @@ public:
 	MsgId lastSearchId() const;
 	MsgId lastSearchMigratedId() const;
 
+	void setFilterTypes(Dialogs::EntryTypes types);
+	void setTabFilteringState(bool paused);
+
 	WidgetState state() const;
 	bool waitingForSearch() const {
 		return _waitingForSearch;
@@ -129,10 +134,18 @@ public:
 
 	void notify_historyMuteUpdated(History *history);
 
+	not_null<IndexedList*> dialogsList() const;
+
+	void performFilter();
+
+	const Dialogs::EntryTypes& currentFilter() const { return _currentFilterTypes; }
+
 	~InnerWidget();
 
 public slots:
 	void onParentGeometryChanged();
+	void onPerformFilterStarted();
+	void onPerformFilterFinished();
 
 signals:
 	void draggingScrollDelta(int delta);
@@ -323,8 +336,11 @@ private:
 	int _skipTopDialogs = 0;
 	Row *_selected = nullptr;
 	Row *_pressed = nullptr;
+	Key _selectedKey;
+	Key _pressedKey;
 
 	Row *_dragging = nullptr;
+	Key _draggingKey;
 	int _draggingIndex = -1;
 	int _aboveIndex = -1;
 	QPoint _dragStart;
@@ -392,6 +408,7 @@ private:
 	rpl::event_stream<ChosenRow> _chosenRow;
 
 	base::unique_qptr<Ui::PopupMenu> _menu;
+	Dialogs::EntryTypes _currentFilterTypes = Dialogs::EntryType::All;
 
 };
 

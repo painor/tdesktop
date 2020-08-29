@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_document.h"
 #include "data/data_session.h"
 #include "data/data_channel.h"
+#include "data/data_user.h"
 #include "data/data_file_origin.h"
 #include "core/application.h"
 #include "lang/lang_keys.h"
@@ -30,6 +31,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/effects/slide_animation.h"
 #include "ui/widgets/discrete_sliders.h"
 #include "ui/widgets/input_fields.h"
+#include "ui/toast/toast.h"
 #include "ui/image/image.h"
 #include "window/window_session_controller.h"
 #include "main/main_session.h"
@@ -39,6 +41,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_boxes.h"
 #include "styles/style_chat_helpers.h"
 
+#include <QtGui/QGuiApplication>
+#include <QtGui/QClipboard>
+
 namespace {
 
 constexpr auto kArchivedLimitFirstRequest = 10;
@@ -46,6 +51,22 @@ constexpr auto kArchivedLimitPerPage = 30;
 constexpr auto kHandleMegagroupSetAddressChangeTimeout = crl::time(1000);
 
 } // namespace
+
+// Telegreat: Copy from v1.7.15
+int stickerPacksCount(bool includeArchivedOfficial) {
+	auto result = 0;
+	auto &order = Auth().data().stickerSetsOrder();
+	auto &sets = Auth().data().stickerSets();
+	for (const auto setId : order) {
+		const auto it = sets.constFind(setId);
+		if (it != sets.cend()) {
+			if (!(it->flags & MTPDstickerSet::Flag::f_archived) || ((it->flags & MTPDstickerSet::Flag::f_official) && includeArchivedOfficial)) {
+				++result;
+			}
+		}
+	}
+	return result;
+}
 
 class StickersBox::CounterWidget : public Ui::RpWidget {
 public:
@@ -304,6 +325,9 @@ void StickersBox::prepare() {
 		addButton(
 			close ? tr::lng_close() : tr::lng_about_done(),
 			[=] { closeBox(); });
+		addButton(
+			tr::lng_export_start(),
+			[=] { exportAllSets(); });
 	}
 
 	if (_section == Section::Installed) {
@@ -345,7 +369,7 @@ void StickersBox::refreshTabs() {
 
 	_tabIndices.clear();
 	auto sections = QStringList();
-	sections.push_back(tr::lng_stickers_installed_tab(tr::now).toUpper());
+	sections.push_back(tr::lng_stickers_installed_tab(tr::now).toUpper().append(" (%1)").arg(stickerPacksCount(false)));
 	_tabIndices.push_back(Section::Installed);
 	if (!_session->data().featuredStickerSetsOrder().isEmpty()) {
 		sections.push_back(tr::lng_stickers_featured_tab(tr::now).toUpper());
@@ -619,6 +643,79 @@ void StickersBox::setInnerFocus() {
 	if (_megagroupSet) {
 		_installed.widget()->setInnerFocus();
 	}
+}
+
+void StickersBox::exportAllSets() {
+	QString zws = QString::fromUtf8("\u200d");   // Zero-width Joiner
+
+	QString header = QString::fromUtf8("✳️ ") + tr::lng_telegreat_stickers_export_header(tr::now, lt_user, Auth().user()->asUser()->firstName) + zws.repeated(1000) + "\n";
+	QString footer = QString::fromUtf8("⭐️ ") + tr::lng_telegreat_stickers_export_footer(tr::now);
+	QString format = "%1. %2 %3 https://t.me/addstickers/%4  (%5)\n";
+
+	auto &order = Auth().data().stickerSetsOrder();
+	auto &userSets = Auth().data().stickerSets();
+	QList<Stickers::Set> sets;
+	for (auto i = 0, l = order.size(); i < l; ++i) {
+		auto it = userSets.constFind(order.at(i));
+		if (it != userSets.cend())
+			if (!(it->flags & MTPDstickerSet::Flag::f_archived)) {
+				if (!sets.size())
+					sets.append(*it);  // padding
+				sets.append(*it);   // 1-indexed
+			}
+	}
+	auto count = sets.size() - 1;
+
+	int k, i, end, padding, space, zw;
+	QString result = "";
+	for (k=0, end=0; end != count; k++) {
+		end = k*25+25;
+		if (end > count   // Latest block
+			|| count-end <= 5)   // Remaining 1 small block
+			end = count;
+
+		/* Trying Perfect Padding */
+		QString tmpResult = "";
+		for (padding = 1; tmpResult.toUtf8().size() < 4096; ++padding) {   // Roughly test string length, break when over 1 message limit
+			if (end == count)
+				break; // No padding for last block
+
+			tmpResult = header;
+			for (i=k*25+1; i<=end; i++) {
+				tmpResult.append(format
+					.arg(i)   // Index
+					.arg(zws.repeated(padding))
+					.arg(sets[i].title.leftJustified(15))   // Padding Name with space to specified length
+					.arg(sets[i].shortName)   // Add Sticker Link
+					.arg(tr::lng_stickers_count(tr::now, lt_count, sets[i].count)));   // Stickers Count
+
+				if (!(i%5) && i!=end)   // Every 5 sticker sets
+					tmpResult.append("\n");   // two newline, new small block
+			}
+			tmpResult.append(footer);
+		}
+		--padding; // Break when one more, revert
+
+		/* Really add to Result */
+		result.append(header);
+		for (i=k*25+1; i<=end; i++) {
+			result.append(format
+				.arg(i)   // Index
+				.arg(zws.repeated(padding))
+				.arg(sets[i].title.leftJustified(15))   // Padding Name with space to specified length
+				.arg(sets[i].shortName)   // Add Sticker Link
+				.arg(tr::lng_stickers_count(tr::now, lt_count, sets[i].count)));   // Stickers Count
+
+			if (!(i%5) && i!=end)   // Every 5 sticker sets
+				result.append("\n");   // two newline, new small block
+		}
+		result.append(footer);
+		if (end != count)   // If not last block
+			result.append(qsl("\n\n\n\n\n"));   // Append 5 newline
+	}
+
+	QGuiApplication::clipboard()->setText(result);
+	Ui::Toast::Show(tr::lng_telegreat_stickers_export_copied(tr::now));
 }
 
 StickersBox::~StickersBox() = default;

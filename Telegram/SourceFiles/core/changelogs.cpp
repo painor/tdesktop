@@ -44,6 +44,8 @@ std::map<int, const char*> BetaLogs() {
 		"Settings > Advanced > Automatic media download.\n"
 
 		"\xE2\x80\xA2 Spell checker on Linux using Enchant.\n"
+
+		"\nWelcome to join t.me/Telegreat channel and discussion group \xF0\x9F\x98\x8A"
 	},
 	};
 };
@@ -128,7 +130,7 @@ void Changelogs::addLocalLogs() {
 			lt_changes,
 			tr::lng_new_version_minor(tr::now),
 			lt_link,
-			qsl("https://desktop.telegram.org/changelog"));
+			qsl("https://telegre.at/changelog"));
 		addLocalLog(text.trimmed());
 	}
 }

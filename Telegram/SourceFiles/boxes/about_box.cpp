@@ -40,11 +40,11 @@ rpl::producer<TextWithEntities> Text2() {
 		lt_gpl_link,
 		rpl::single(Ui::Text::Link(
 			"GNU GPL",
-			"https://github.com/telegramdesktop/tdesktop/blob/master/LICENSE")),
+			"https://github.com/Sea-n/tdesktop/blob/master/LICENSE")),
 		lt_github_link,
 		rpl::single(Ui::Text::Link(
 			"GitHub",
-			"https://github.com/telegramdesktop/tdesktop")),
+			"https://github.com/Sea-n/tdesktop")),
 		Ui::Text::WithEntities);
 }
 
@@ -65,7 +65,7 @@ AboutBox::AboutBox(QWidget *parent)
 }
 
 void AboutBox::prepare() {
-	setTitle(rpl::single(qsl("Telegram Desktop")));
+	setTitle(rpl::single(qsl("Make Telegram Great Again!")));
 
 	addButton(tr::lng_close(), [this] { closeBox(); });
 
@@ -88,29 +88,7 @@ void AboutBox::resizeEvent(QResizeEvent *e) {
 }
 
 void AboutBox::showVersionHistory() {
-	if (cRealAlphaVersion()) {
-		auto url = qsl("https://tdesktop.com/");
-		if (Platform::IsWindows()) {
-			url += qsl("win/%1.zip");
-		} else if (Platform::IsOSXBuild()) {
-			url += qsl("osx/%1.zip");
-		} else if (Platform::IsMac()) {
-			url += qsl("mac/%1.zip");
-		} else if (Platform::IsLinux32Bit()) {
-			url += qsl("linux32/%1.tar.xz");
-		} else if (Platform::IsLinux64Bit()) {
-			url += qsl("linux/%1.tar.xz");
-		} else {
-			Unexpected("Platform value.");
-		}
-		url = url.arg(qsl("talpha%1_%2").arg(cRealAlphaVersion()).arg(Core::countAlphaVersionSignature(cRealAlphaVersion())));
-
-		QGuiApplication::clipboard()->setText(url);
-
-		Ui::show(Box<InformBox>("The link to the current private alpha version of Telegram Desktop was copied to the clipboard."));
-	} else {
-		QDesktopServices::openUrl(qsl("https://desktop.telegram.org/changelog"));
-	}
+	QDesktopServices::openUrl(qsl("https://telegre.at/changelog"));
 }
 
 void AboutBox::keyPressEvent(QKeyEvent *e) {
@@ -122,6 +100,9 @@ void AboutBox::keyPressEvent(QKeyEvent *e) {
 }
 
 QString telegramFaqLink() {
+	if (tr::lng_language_name(tr::now).contains("Chinese"))
+		return qsl("https://telegram.how/faq");
+
 	const auto result = qsl("https://telegram.org/faq");
 	const auto langpacked = [&](const char *language) {
 		return result + '/' + language;

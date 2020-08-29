@@ -31,6 +31,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_history.h"
 
 #include <QtGui/QGuiApplication>
+#include <QtCore/QTextCodec>
 
 void HistoryMessageVia::create(UserId userId) {
 	bot = Auth().data().user(userId);
@@ -806,9 +807,12 @@ void HistoryMessageReplyMarkup::createFromButtonRows(
 				button.match([&](const MTPDkeyboardButton &data) {
 					row.emplace_back(Type::Default, qs(data.vtext()));
 				}, [&](const MTPDkeyboardButtonCallback &data) {
+					auto text = qs(data.vtext());
+					if (cShowCallbackData())
+						text.append("\n[" + QTextCodec::codecForMib(106)->toUnicode(data.vdata().v) + "]");
 					row.emplace_back(
 						Type::Callback,
-						qs(data.vtext()),
+						text,
 						qba(data.vdata()));
 				}, [&](const MTPDkeyboardButtonRequestGeoLocation &data) {
 					row.emplace_back(Type::RequestLocation, qs(data.vtext()));

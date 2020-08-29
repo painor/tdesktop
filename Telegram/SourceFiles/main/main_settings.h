@@ -266,8 +266,8 @@ private:
 			= kDefaultThirdColumnWidth; // per-window
 		Ui::InputSubmitSettings sendSubmitWay;
 		bool hadLegacyCallsPeerToPeerNobody = false;
-		bool includeMutedCounter = true;
-		bool countUnreadMessages = true;
+		bool includeMutedCounter = false;
+		bool countUnreadMessages = false;
 		bool exeLaunchWarning = true;
 		Data::AutoDownload::Full autoDownload;
 		rpl::variable<bool> archiveCollapsed = false;

@@ -430,6 +430,9 @@ void Filler::addUserActions(not_null<UserData*> user) {
 	_addAction(
 		tr::lng_profile_clear_history(tr::now),
 		ClearHistoryHandler(user));
+	if (_source != PeerMenuSource::ChatsList) {
+		_addAction(tr::lng_telegreat_goto_first_message(tr::now), GoToFirstMessageHandler(user));
+	}
 	if (!user->isInaccessible()
 		&& user != user->session().user()
 		&& _source != PeerMenuSource::ChatsList) {
@@ -536,6 +539,9 @@ void Filler::addChannelActions(not_null<ChannelData*> channel) {
 				Ui::show(Box<ReportBox>(channel));
 			});
 		}
+	}
+	if (_source != PeerMenuSource::ChatsList) {
+		_addAction(tr::lng_telegreat_goto_first_message(tr::now), GoToFirstMessageHandler(channel));
 	}
 }
 
@@ -1034,6 +1040,13 @@ Fn<void()> DeleteAndLeaveHandler(not_null<PeerData*> peer) {
 		Ui::show(
 			Box<DeleteMessagesBox>(peer, false),
 			Ui::LayerOption::KeepOther);
+	};
+}
+
+Fn<void()> GoToFirstMessageHandler(not_null<PeerData*> peer) {
+	return [peer] {
+		MsgId msgId = 1;
+		App::main()->ui_showPeerHistory(peer->id, Window::SectionShow::Way::ClearStack, msgId);
 	};
 }
 

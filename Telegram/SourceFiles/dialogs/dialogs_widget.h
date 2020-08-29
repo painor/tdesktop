@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/section_widget.h"
 #include "ui/effects/animations.h"
 #include "ui/widgets/scroll_area.h"
+#include "dialogs/dialogs_entry.h"
 #include "ui/special_buttons.h"
 #include "api/api_single_message_search.h"
 #include "mtproto/mtproto_rpc_sender.h"
@@ -46,6 +47,7 @@ struct RowDescriptor;
 class Row;
 class FakeRow;
 class Key;
+class ChatTabs;
 struct ChosenRow;
 class InnerWidget;
 enum class SearchRequestType;
@@ -88,6 +90,9 @@ public:
 
 	void notify_historyMuteUpdated(History *history);
 
+	void performFilter();
+	void unreadCountChanged();
+
 	~Widget();
 
 signals:
@@ -95,6 +100,7 @@ signals:
 
 public slots:
 	void onDraggingScrollDelta(int delta);
+	void onChatTabSelected(const Dialogs::EntryTypes &type);
 
 	void onListScroll();
 	bool onCancelSearch();
@@ -165,6 +171,8 @@ private:
 
 	bool searchFailed(SearchRequestType type, const RPCError &error, mtpRequestId req);
 	bool peopleFailed(const RPCError &error, mtpRequestId req);
+	
+	void setChatTabsVisible(bool isVisible);
 
 	void scrollToTop();
 	void setupScrollUpButton();
@@ -186,6 +194,8 @@ private:
 	object_ptr<Ui::CrossButton> _cancelSearch;
 	object_ptr<Ui::IconButton> _lockUnlock;
 	object_ptr<Ui::ScrollArea> _scroll;
+	object_ptr<Dialogs::ChatTabs> _chatTabs;
+	bool _chatTabsVisible = true;
 	QPointer<InnerWidget> _inner;
 	class BottomButton;
 	object_ptr<BottomButton> _updateTelegram = { nullptr };

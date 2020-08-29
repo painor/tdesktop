@@ -22,6 +22,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_utilities.h" // Ui::Text::ToUpper
 #include "ui/special_buttons.h"
 #include "ui/unread_badge.h"
+#include "ui/toast/toast.h"
 #include "base/unixtime.h"
 #include "window/window_session_controller.h"
 #include "observer_peer.h"
@@ -30,6 +31,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "apiwrap.h"
 #include "styles/style_boxes.h"
 #include "styles/style_info.h"
+
+#include <QtGui/QGuiApplication>
+#include <QtGui/QClipboard>
 
 namespace Info {
 namespace Profile {
@@ -252,6 +256,9 @@ Cover::Cover(
 	_peer->isMegagroup()
 		? st::infoProfileMegagroupStatusLabel
 		: st::infoProfileStatusLabel)
+, _id(
+	this,
+	st::infoProfileMegagroupStatusLabel)
 , _refreshStatusTimer([this] { refreshStatusText(); }) {
 	_peer->updateFull();
 
@@ -431,6 +438,17 @@ void Cover::refreshStatusText() {
 			_showSection.fire(Section::Type::Members);
 		}));
 	}
+	
+	QLocale::setDefault(QLocale::Language::French);
+	auto idText = textcmdLink(1, QString("ID: %L1").arg(_peer->bareId()));
+	_id->setRichText(idText);
+	
+	_id->setLink(1, std::make_shared<LambdaClickHandler>([=] {
+		QString id = QString::number(_peer->bareId());
+		QGuiApplication::clipboard()->setText(id);
+		Ui::Toast::Show("ID copied to clipboard.");
+	}));
+
 	refreshStatusGeometry(width());
 }
 
@@ -481,6 +499,12 @@ void Cover::refreshStatusGeometry(int newWidth) {
 	_status->moveToLeft(
 		st::infoProfileStatusLeft,
 		st::infoProfileStatusTop,
+		newWidth);
+	
+	_id->resizeToWidth(statusWidth);
+	_id->moveToLeft(
+		st::infoProfileStatusLeft,
+		st::infoProfileStatusTop + 20,
 		newWidth);
 }
 

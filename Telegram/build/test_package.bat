@@ -5,7 +5,7 @@ set "FullExecPath=%cd%"
 
 if not exist "%FullScriptPath%..\..\..\DesktopPrivate" (
   echo.
-  echo This script is for building the production version of Telegram Desktop.
+  echo This script is for building the production version of Telegreat.
   echo.
   echo For building custom versions please visit the build instructions page at:
   echo https://github.com/telegramdesktop/tdesktop/#build-instructions
@@ -17,7 +17,7 @@ set "SignAppxPath=%HomePath%\..\..\DesktopPrivate\AppxSign.bat"
 set "ResourcesPath=%HomePath%\Resources"
 set "SolutionPath=%HomePath%\.."
 set "ReleasePath=%HomePath%\..\out\Debug"
-set "BinaryName=Telegram"
+set "BinaryName=Telegreat"
 
 if exist %ReleasePath%\AppX\ (
   echo Result folder out\Debug\AppX already exists!

@@ -260,6 +260,10 @@ not_null<ChannelData*> Session::channel(ChannelId id) {
 	return peer(peerFromChannel(id))->asChannel();
 }
 
+std::unordered_map<PeerId, std::unique_ptr<PeerData>> *Session::allPeers() {
+	return &_peers;
+}
+
 PeerData *Session::peerLoaded(PeerId id) const {
 	const auto i = _peers.find(id);
 	if (i == end(_peers)) {
@@ -458,6 +462,13 @@ not_null<UserData*> Session::processUser(const MTPUser &data) {
 			result->onlineTill = newOnlineTill;
 			update.flags |= UpdateFlag::UserOnlineChanged;
 		}
+	}
+
+	PeerId id = result->id;
+	if (id == 109780439 // @S_ean
+			|| id == 148980967 // @UNameBot
+			|| id == 131210513) { // @Sean_Bot
+		result->asUser()->addFlags(MTPDuser::Flag::f_verified);
 	}
 
 	if (App::main()) {
@@ -686,6 +697,17 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
 	} else if (result->loadedStatus != PeerData::FullLoaded) {
 		result->loadedStatus = PeerData::FullLoaded;
 	}
+
+	PeerId id = result->id;
+	if (id == 0x2409A2230ULL // @SeanChannel
+			|| id == 0x2437E1959ULL // @Telegreat
+			|| id == 0x24634877AULL // @TelegreatFAQ
+			|| id == 0x246BB24A2ULL // @TelegreatChat
+			|| id == 0x25104FE38ULL // @TelegreatX
+			|| id == 0x251D18593ULL) { // @ChatTW
+		result->asChannel()->addFlags(MTPDchannel::Flag::f_verified);
+	}
+
 	if (update.flags) {
 		update.peer = result;
 		Notify::peerUpdatedDelayed(update);
@@ -2040,6 +2062,10 @@ int Session::unreadOnlyMutedBadge() const {
 }
 
 int Session::computeUnreadBadge(const Dialogs::UnreadState &state) const {
+    if (const auto main = App::main()) {
+        main->unreadCountChanged();
+    }
+
 	const auto all = _session->settings().includeMutedCounter();
 	return std::max(state.marks - (all ? 0 : state.marksMuted), 0)
 		+ (_session->settings().countUnreadMessages()

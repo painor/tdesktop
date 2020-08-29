@@ -74,6 +74,7 @@ void PeerMenuUnblockUserWithBotRestart(not_null<UserData*> user);
 void ToggleHistoryArchived(not_null<History*> history, bool archived);
 Fn<void()> ClearHistoryHandler(not_null<PeerData*> peer);
 Fn<void()> DeleteAndLeaveHandler(not_null<PeerData*> peer);
+Fn<void()> GoToFirstMessageHandler(not_null<PeerData*> peer);
 
 QPointer<Ui::RpWidget> ShowForwardMessagesBox(
 	not_null<Window::SessionNavigation*> navigation,

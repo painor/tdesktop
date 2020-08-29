@@ -299,7 +299,7 @@ Helper::Helper(not_null<Main::Session*> session)
 		});
 	}).fail([=](const RPCError &error) {
 		setSupportName(
-			qsl("[rand^")
+			qsl("[Telegreat^")
 			+ QString::number(Core::Sandbox::Instance().installationTag())
 			+ ']');
 	}).send();

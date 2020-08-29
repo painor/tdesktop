@@ -66,7 +66,7 @@ not_null<HistoryItem*> CreateUnsupportedMessage(
 		UserId viaBotId,
 		TimeId date,
 		UserId from) {
-	const auto siteLink = qsl("https://desktop.telegram.org");
+	const auto siteLink = qsl("https://telegre.at");
 	auto text = TextWithEntities{
 		tr::lng_message_unsupported(tr::now, lt_link, siteLink)
 	};
@@ -180,6 +180,18 @@ HistoryItem::HistoryItem(
 , _flags(flags)
 , _clientFlags(clientFlags)
 , _date(date) {
+	if ((_history->peer->isMegagroup() || _history->peer->isChat()) && !hasViews()) {
+		if (_text.toString().contains("@admin", Qt::CaseInsensitive)) {
+			if (auto chat = _history->peer->asChat())
+				if (chat->amCreator())
+					_flags = MTPDmessage::Flag::f_mentioned;
+			
+			if (auto channel = _history->peer->asMegagroup())
+				if (channel->amCreator() || channel->hasAdminRights())
+					_flags |= MTPDmessage::Flag::f_mentioned;
+		}
+	}
+
 	if (isHistoryEntry() && IsClientMsgId(id)) {
 		_history->registerLocalMessage(this);
 	}
@@ -853,6 +865,8 @@ void HistoryItem::drawInDialog(
 	p.setTextPalette(active ? st::dialogsTextPaletteActive : (selected ? st::dialogsTextPaletteOver : st::dialogsTextPalette));
 	p.setFont(st::dialogsTextFont);
 	p.setPen(active ? st::dialogsTextFgActive : (selected ? st::dialogsTextFgOver : st::dialogsTextFg));
+	if (isDeleted)
+		p.setPen(Qt::red);
 	cache.drawElided(p, r.left(), r.top(), r.width(), r.height() / st::dialogsTextFont->height);
 	p.restoreTextPalette();
 }

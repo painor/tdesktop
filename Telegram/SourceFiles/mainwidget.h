@@ -203,6 +203,7 @@ public:
 
 	void deletePhotoLayer(PhotoData *photo);
 
+    void unreadCountChanged();
 	// While HistoryInner is not HistoryView::ListWidget.
 	crl::time highlightStartTime(not_null<const HistoryItem*> item) const;
 
@@ -292,6 +293,8 @@ public:
 	void notify_historyMuteUpdated(History *history);
 
 	void closeBothPlayers();
+
+	int getDurationTime(const PeerData *peer);
 
 	bool isQuitPrevent();
 

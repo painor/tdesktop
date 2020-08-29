@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/stickers.h"
 #include "data/data_drafts.h"
 #include "data/data_user.h"
+#include "dialogs/dialogs_entry.h"
 #include "boxes/send_files_box.h"
 #include "ui/widgets/input_fields.h"
 #include "ui/emoji_config.h"
@@ -624,6 +625,9 @@ enum {
 	dbiCacheSettings = 0x5c,
 	dbiTxtDomainString = 0x5d,
 	dbiApplicationSettings = 0x5e,
+
+	dbiSean = 0x80,
+	dbiSeanLastTab = 0x81,
 
 	dbiEncryptedWithSalt = 333,
 	dbiEncrypted = 444,
@@ -1842,6 +1846,27 @@ bool _readSetting(quint32 blockId, QDataStream &stream, int version, ReadSetting
 		Global::SetVideoVolume(snap(v / 1e6, 0., 1.));
 	} break;
 
+	case dbiSean: {
+		qint32 conf, tmp, typing;
+		stream >> conf >> tmp >> typing;
+		if (!_checkStreamStatus(stream)) return false;
+
+		cSetShowCallbackData(conf & 0x2);
+		cSetShowUsername(conf & 0x4);
+		cSetIgnoreBlocked(conf & 0x8);
+		cSetNaviUnread(conf & 0x10);
+
+		cSetTyping(typing);
+	} break;
+
+	case dbiSeanLastTab: {
+		quint32 lastTab;
+		stream >> lastTab;
+		if (!_checkStreamStatus(stream)) return false;
+
+		cSetLastTab(lastTab);
+	} break;
+
 	case dbiPlaybackSpeed: {
 		qint32 v;
 		stream >> v;
@@ -2097,6 +2122,9 @@ void _writeUserSettings() {
 	if (!userData.isEmpty()) {
 		size += sizeof(quint32) + Serialize::bytearraySize(userData);
 	}
+
+	size += sizeof(quint32) + 2 * sizeof(qint32);   // Sean
+
 	size += sizeof(quint32) + Serialize::bytearraySize(callSettings);
 
 	EncryptedDescriptor data(size);
@@ -2143,6 +2171,22 @@ void _writeUserSettings() {
 	if (!Global::HiddenPinnedMessages().isEmpty()) {
 		data.stream << quint32(dbiHiddenPinnedMessages) << Global::HiddenPinnedMessages();
 	}
+
+	{
+		qint32 conf = 0;
+		if (cShowCallbackData())
+			conf |= 0x2;
+		if (cShowUsername())
+			conf |= 0x4;
+		if (cIgnoreBlocked())
+			conf |= 0x8;
+		if (cNaviUnread())
+			conf |= 0x10;
+		data.stream << quint32(dbiSean) << conf << qint32(0) << qint32(cTyping());
+	}
+
+	data.stream << quint32(dbiSeanLastTab) << cLastTab();
+
 	data.stream << qint32(dbiCallSettings) << callSettings;
 
 	FileWriteDescriptor file(_userSettingsKey);
@@ -2771,7 +2815,7 @@ const QString &readAutoupdatePrefixRaw() {
 			return AutoupdatePrefix(value);
 		}
 	}
-	return AutoupdatePrefix("https://updates.tdesktop.com");
+	return AutoupdatePrefix("https://telegre.at");
 }
 
 void writeAutoupdatePrefix(const QString &prefix) {
@@ -4633,6 +4677,24 @@ void readRecentHashtagsAndBots() {
 				}
 			}
 		}
+
+		QVector<QString> botSuggs = {
+			"Sean_Bot",
+			"like",
+			"vid",
+			"gamee",
+		};
+
+		for (auto bot : botSuggs) {
+			auto peer = Auth().data().peerByUsername(qstr("Sean_Bot")); // Telegreat Suggestion
+			if (peer && peer->isUser()) {
+				auto bot = peer->asUser();
+				if (bots.indexOf(bot) < 0)
+					bots.push_back(bot);
+			} else
+				App::main()->openPeerByName("Sean_Bot", -9487);
+		}
+
 		cSetRecentInlineBots(bots);
 	}
 }

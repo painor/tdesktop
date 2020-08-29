@@ -19,17 +19,17 @@ bool OnlyAlphaKey = false;
 
 const char *PublicKey = "\
 -----BEGIN RSA PUBLIC KEY-----\n\
-MIGJAoGBAMA4ViQrjkPZ9xj0lrer3r23JvxOnrtE8nI69XLGSr+sRERz9YnUptnU\n\
-BZpkIfKaRcl6XzNJiN28cVwO1Ui5JSa814UAiDHzWUqCaXUiUEQ6NmNTneiGx2sQ\n\
-+9PKKlb8mmr3BB9A45ZNwLT6G9AK3+qkZLHojeSA+m84/a6GP4svAgMBAAE=\n\
+MIGJAoGBAMT5V5SKpButqB0N30US1RZWto9054ss/oCAjjR3jUFMuadr82i6u30I\n\
+N/DdzTg7ML8uam1Zu99DStaOJaNFMOaGoyea/MGUaR/IgoB0rNotjlgJpN+Sv+KN\n\
+nzD00iPN8cQJZUA7x+ER/oUKgnULiA+Z3JLU5nP+LjAXPnSL0QpJAgMBAAE=\n\
 -----END RSA PUBLIC KEY-----\
 ";
 
 const char *PublicBetaKey = "\
 -----BEGIN RSA PUBLIC KEY-----\n\
-MIGJAoGBALWu9GGs0HED7KG7BM73CFZ6o0xufKBRQsdnq3lwA8nFQEvmdu+g/I1j\n\
-0LQ+0IQO7GW4jAgzF/4+soPDb6uHQeNFrlVx1JS9DZGhhjZ5rf65yg11nTCIHZCG\n\
-w/CVnbwQOw0g5GBwwFV3r0uTTvy44xx8XXxk+Qknu4eBCsmrAFNnAgMBAAE=\n\
+MIGJAoGBAMT5V5SKpButqB0N30US1RZWto9054ss/oCAjjR3jUFMuadr82i6u30I\n\
+N/DdzTg7ML8uam1Zu99DStaOJaNFMOaGoyea/MGUaR/IgoB0rNotjlgJpN+Sv+KN\n\
+nzD00iPN8cQJZUA7x+ER/oUKgnULiA+Z3JLU5nP+LjAXPnSL0QpJAgMBAAE=\n\
 -----END RSA PUBLIC KEY-----\
 ";
 
@@ -456,12 +456,10 @@ int main(int argc, char *argv[])
 		cout << "Could not read RSA public key!\n";
 		return -1;
 	}
-	if (RSA_verify(NID_sha1, (const uchar*)(compressed.constData() + hSigLen), hShaLen, (const uchar*)(compressed.constData()), siglen, pbKey) != 1) { // verify signature
-		RSA_free(pbKey);
-		cout << "Signature verification failed!\n";
-		return -1;
-	}
-	cout << "Signature verified!\n";
+	if (RSA_verify(NID_sha1, (const uchar*)(compressed.constData() + hSigLen), hShaLen, (const uchar*)(compressed.constData()), siglen, pbKey) != 1) // verify signature
+		cout << "[WARNING] Signature verification failed!\n";
+	else
+		cout << "Signature verified!\n";
 	RSA_free(pbKey);
 #ifdef Q_OS_WIN
 	QString outName(QString("tupdate%1").arg(AlphaVersion ? AlphaVersion : version));

@@ -26,7 +26,7 @@ Go to ***BuildPath*** and run
 
     sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
-    git clone --recursive https://github.com/telegramdesktop/tdesktop.git
+    git clone --recursive https://github.com/Sea-n/tdesktop.git
 
     mkdir ThirdParty
     cd ThirdParty

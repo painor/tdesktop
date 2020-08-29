@@ -11,12 +11,14 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "dialogs/dialogs_indexed_list.h"
 #include "data/data_session.h"
 #include "data/data_folder.h"
+#include "data/data_user.h"
 #include "mainwidget.h"
 #include "main/main_session.h"
 #include "history/history_item.h"
 #include "history/history.h"
 #include "app.h"
 #include "styles/style_dialogs.h" // st::dialogsTextWidthMin
+#include "base/flags.h"
 
 namespace Dialogs {
 namespace {
@@ -145,11 +147,18 @@ Row *Entry::mainChatListLink(Mode list) const {
 	return it->second;
 }
 
+Row *Entry::rowInCurrentTab() const {
+	return _rowInCurrentTab;
+}
+
+void Entry::setRowInCurrentTab(Row *row) {
+	_rowInCurrentTab = row;
+}
+
 PositionChange Entry::adjustByPosInChatList(Mode list) {
-	const auto lnk = mainChatListLink(list);
-	const auto from = lnk->pos();
+	const auto from = posInChatList(list);
 	myChatsList(list)->adjustByDate(chatListLinks(list));
-	const auto to = lnk->pos();
+	const auto to = posInChatList(list);
 	return { from, to };
 }
 
@@ -162,6 +171,9 @@ void Entry::setChatListTimeId(TimeId date) {
 }
 
 int Entry::posInChatList(Dialogs::Mode list) const {
+	if (list == Mode::All) {
+		return _rowInCurrentTab ? _rowInCurrentTab->pos() : mainChatListLink(list)->pos();
+	}
 	return mainChatListLink(list)->pos();
 }
 
@@ -222,6 +234,26 @@ void Entry::updateChatListEntry() const {
 		}
 	}
 }
+
+void Entry::updateChatListEntry(Row *row) const {
+	if (const auto main = App::main()) {
+		if (inChatList()) {
+			main->repaintDialogRow(
+			   Mode::All,
+			   row);
+			if (inChatList(Mode::Important)) {
+				main->repaintDialogRow(
+					Mode::Important,
+					row);
+			}
+		}
+		if (session().supportMode()
+			&& !session().settings().supportAllSearchResults()) {
+			main->repaintDialogRow({ _key, FullMsgId() });
+		}
+	}
+}
+
 
 not_null<IndexedList*> Entry::myChatsList(Mode list) const {
 	return owner().chatsList(folder())->indexed(list);

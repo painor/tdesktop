@@ -71,6 +71,8 @@ enum RoundCorners : int {
 namespace App {
 	QString formatPhone(QString phone);
 
+	void updateTab(int oriType, int newType);
+
 	void hoveredItem(HistoryView::Element *item);
 	HistoryView::Element *hoveredItem();
 	void pressedItem(HistoryView::Element *item);

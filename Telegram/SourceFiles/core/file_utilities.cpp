@@ -155,7 +155,7 @@ QString DefaultDownloadPath() {
 		QStandardPaths::DownloadLocation)
 		+ '/'
 		+ (Main::Session::Exists() && Auth().supportMode()
-			? "Tsupport Desktop"
+			? "Telegreat (Support Mode)"
 			: str_const_toString(AppName))
 		+ '/';
 }

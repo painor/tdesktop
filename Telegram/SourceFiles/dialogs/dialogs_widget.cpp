@@ -11,6 +11,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "dialogs/dialogs_search_from_controllers.h"
 #include "dialogs/dialogs_key.h"
 #include "dialogs/dialogs_entry.h"
+#include "dialogs/dialogs_indexed_list.h"
+#include "dialogs/dialogs_chat_tabs.h"
 #include "history/history.h"
 //#include "history/feed/history_feed_section.h" // #feed
 #include "history/view/history_view_top_bar_widget.h"
@@ -170,6 +172,7 @@ Widget::Widget(
 , _cancelSearch(_searchControls, st::dialogsCancelSearch)
 , _lockUnlock(_searchControls, st::dialogsLock)
 , _scroll(this, st::dialogsScroll)
+, _chatTabs(this)
 , _scrollToTop(_scroll, st::dialogsToUp)
 , _singleMessageSearch(&controller->session()) {
 	_inner = _scroll->setOwnedWidget(object_ptr<InnerWidget>(this, controller));
@@ -233,6 +236,8 @@ Widget::Widget(
 		_filter,
 		&Ui::FlatInput::cursorPositionChanged,
 		[=](int from, int to) { onFilterCursorMoved(from, to); });
+	
+	connect(_chatTabs, SIGNAL(tabSelected(const Dialogs::EntryTypes &)), this, SLOT(onChatTabSelected(const Dialogs::EntryTypes &)));
 
 	if (!Core::UpdaterDisabled()) {
 		Core::UpdateChecker checker;
@@ -296,6 +301,12 @@ Widget::Widget(
 	setupConnectingWidget();
 	setupSupportMode();
 	setupScrollUpButton();
+	
+	auto curTab = _chatTabs->selectedTab();
+	
+	if(curTab != Dialogs::EntryType::All && curTab != Dialogs::EntryType::None) {
+		onChatTabSelected(curTab);
+	}
 
 	changeOpenedFolder(
 		controller->openedFolder().current(),
@@ -642,6 +653,7 @@ void Widget::startSlideAnimation() {
 	if (_showDirection == Window::SlideDirection::FromLeft) {
 		std::swap(_cacheUnder, _cacheOver);
 	}
+
 	_a_show.start([=] { animationCallback(); }, 0., 1., st::slideDuration, Window::SlideAnimation::transition());
 }
 
@@ -678,6 +690,20 @@ void Widget::escape() {
 
 void Widget::notify_historyMuteUpdated(History *history) {
 	_inner->notify_historyMuteUpdated(history);
+}
+
+void Widget::performFilter() {
+	_inner->performFilter();
+}
+
+void Widget::unreadCountChanged() {
+	UnreadState counts[4];
+
+	for (int i=0; i<4; i++)
+		counts[i] = UnreadState();
+
+	_inner->dialogsList()->countUnreadMessages(counts);
+	_chatTabs->unreadCountChanged(counts);
 }
 
 void Widget::refreshLoadMoreButton(bool mayBlock, bool isBlocked) {
@@ -730,6 +756,11 @@ void Widget::onDraggingScrollDelta(int delta) {
 void Widget::onDraggingScrollTimer() {
 	auto delta = (_draggingScrollDelta > 0) ? qMin(_draggingScrollDelta * 3 / 20 + 1, int32(Ui::kMaxScrollSpeed)) : qMax(_draggingScrollDelta * 3 / 20 - 1, -int32(Ui::kMaxScrollSpeed));
 	_scroll->scrollToY(_scroll->scrollTop() + delta);
+}
+
+void Widget::onChatTabSelected(const Dialogs::EntryTypes &types) {
+	_inner->setFilterTypes(types);
+	_inner->refresh(true);
 }
 
 bool Widget::onSearchMessages(bool searchCache) {
@@ -1160,6 +1191,15 @@ bool Widget::peopleFailed(const RPCError &error, mtpRequestId req) {
 	return true;
 }
 
+void Widget::setChatTabsVisible(bool isVisible) {
+	if (_chatTabsVisible != isVisible) {
+		_chatTabsVisible = isVisible;
+		_chatTabs->setVisible(isVisible);
+		updateControlsGeometry();
+	}
+}
+
+
 void Widget::dragEnterEvent(QDragEnterEvent *e) {
 	using namespace Storage;
 
@@ -1271,6 +1311,10 @@ void Widget::applyFilterUpdate(bool force) {
 		}
 	}
 	_lastFilterText = filterText;
+
+	bool tabsVisible = filterText.isEmpty() && !_searchInChat;
+	setChatTabsVisible(tabsVisible);
+	_inner->setTabFilteringState(!tabsVisible);
 }
 
 void Widget::searchInChat(Key chat) {
@@ -1469,7 +1513,10 @@ void Widget::updateControlsGeometry() {
 	right -= _jumpToDate->width(); _jumpToDate->moveToLeft(right, _filter->y());
 	right -= _chooseFromUser->width(); _chooseFromUser->moveToLeft(right, _filter->y());
 
-	auto scrollTop = filterAreaTop + filterAreaHeight;
+	auto chatTabsTop = filterAreaTop + filterAreaHeight;
+	_chatTabs->setGeometry(0, chatTabsTop, width(), _chatTabs->height());
+	
+	auto scrollTop = chatTabsTop + (_chatTabsVisible ? _chatTabs->height() : 0);
 	auto addToScroll = App::main() ? App::main()->contentScrollAddToY() : 0;
 	auto newScrollTop = _scroll->scrollTop() + addToScroll;
 	auto scrollHeight = height() - scrollTop;

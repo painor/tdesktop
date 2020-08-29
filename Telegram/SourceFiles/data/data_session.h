@@ -126,6 +126,7 @@ public:
 	[[nodiscard]] not_null<UserData*> user(PeerId id) = delete;
 	[[nodiscard]] not_null<ChatData*> chat(PeerId id) = delete;
 	[[nodiscard]] not_null<ChannelData*> channel(PeerId id) = delete;
+	std::unordered_map<PeerId, std::unique_ptr<PeerData>> *allPeers();
 
 	[[nodiscard]] PeerData *peerLoaded(PeerId id) const;
 	[[nodiscard]] PeerData *peerLoaded(UserId id) const = delete;
